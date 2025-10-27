@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Portal AR - Working Version</title>
+    
+    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        
+        /* Big Instructions Overlay */
+        #mainInstructions {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #00ff00;
+            padding: 30px;
+            border-radius: 20px;
+            border: 3px solid #00ff00;
+            text-align: center;
+            z-index: 10000;
+            max-width: 90%;
+            animation: glow 2s infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px #00ff00; }
+            50% { box-shadow: 0 0 40px #00ff00; }
+        }
+        
+        #mainInstructions h1 {
+            font-size: 28px;
+            margin: 0 0 15px 0;
+            color: #00ffff;
+        }
+        
+        #mainInstructions p {
+            font-size: 18px;
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+        
+        #mainInstructions .marker-name {
+            background: #ffff00;
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 5px;
+        }
+        
+        #hideInstructionsBtn {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 18px;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        #hideInstructionsBtn:hover {
+            background: #00ffff;
+        }
+        
+        /* Story Panel */
+        #storyPanel {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: #00ffff;
+            padding: 20px 30px;
+            border-radius: 15px;
+            border: 2px solid #00ffff;
+            max-width: 85%;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0,255,255,0.5);
+            z-index: 1000;
+            display: none;
+        }
+        
+        #storyPanel.show { display: block; }
+        #storyTitle { font-size: 20px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
+        #storyText { font-size: 14px; line-height: 1.4; }
+        
+        /* Progress Bar */
+        #progressBar {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+        
+        .portal-dot {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            border: 3px solid #fff;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .portal-dot::after {
+            content: attr(data-label);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #fff;
+            white-space: nowrap;
+        }
+        
+        .portal-dot.active {
+            background: #ffff00;
+            box-shadow: 0 0 20px #ffff00;
+            animation: pulse 1s infinite;
+        }
+        
+        .portal-dot.completed {
+            background: #00ff00;
+            box-shadow: 0 0 20px #00ff00;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+        
+        /* Tap Instruction */
+        #tapInstruction {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.95);
+            color: #000;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 1000;
+            display: none;
+            animation: bounce 2s infinite;
+        }
+        
+        #tapInstruction.show { display: block; }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+        }
+        
+        /* Debug Info */
+        #debugInfo {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: #0f0;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            border-radius: 8px;
+            z-index: 999;
+            max-width: 250px;
+            border: 2px solid #0f0;
+        }
+        
+        #debugInfo div { margin: 5px 0; }
+        
+        /* Camera Status */
+        #cameraStatus {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 9999;
+            display: none;
+        }
+        
+        #cameraStatus.show { display: block; }
+    </style>
+</head>
+<body>
+    <!-- Main Instructions Overlay -->
+    <div id="mainInstructions">
+        <h1>🌟 TIME PORTAL AR 🌟</h1>
+        <p><strong>Camera is ready!</strong></p>
+        <p>Now point your camera at one of these images:</p>
+        <p>
+            <span class="marker-name">PRIZA</span>
+            <span class="marker-name">ALP</span>
+            <span class="marker-name">AP</span>
+        </p>
+        <p style="font-size: 16px; color: #ffff00;">
+            📸 Print these images or display them on another screen
+        </p>
+        <p style="font-size: 14px; color: #ccc;">
+            The 3D portals will appear when camera sees the images!
+        </p>
+        <button id="hideInstructionsBtn">GOT IT! START AR</button>
+    </div>
+    
+    <!-- Camera Status -->
+    <div id="cameraStatus">
+        <h2>📷 Initializing Camera...</h2>
+        <p>Please allow camera access when prompted</p>
+    </div>
+
+    <!-- Debug Info -->
+    <div id="debugInfo">
+        <div><strong>🎮 TIME PORTAL AR</strong></div>
+        <div>Camera: <span id="cameraState">Starting...</span></div>
+        <div>Status: <span id="status">Loading...</span></div>
+        <div style="margin-top: 10px; border-top: 1px solid #0f0; padding-top: 10px;">
+            <div>Portal 1: <span id="p1status">Waiting</span></div>
+            <div>Portal 2: <span id="p2status">🔒 Locked</span></div>
+            <div>Portal 3: <span id="p3status">🔒 Locked</span></div>
+        </div>
+        <div style="margin-top: 10px; font-size: 10px; color: #888;">
+            Point camera at marker images!
+        </div>
+    </div>
+
+    <!-- Story Panel -->
+    <div id="storyPanel">
+        <div id="storyTitle"></div>
+        <div id="storyText"></div>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div id="progressBar">
+        <div class="portal-dot" id="dot1" data-label="Portal 1"></div>
+        <div class="portal-dot" id="dot2" data-label="Portal 2"></div>
+        <div class="portal-dot" id="dot3" data-label="Portal 3"></div>
+    </div>
+    
+    <!-- Tap Instruction -->
+    <div id="tapInstruction">👆 TAP THE 3D OBJECT TO ACTIVATE!</div>
+
+    <!-- AR Scene -->
+    <a-scene
+        vr-mode-ui="enabled: false"
+        renderer="logarithmicDepthBuffer: true;"
+        embedded
+        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+        
+        <!-- PORTAL 1: PRIZA -->
+        <a-nft type="nft" url="priza" smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5" id="portal1Marker">
+            <a-entity id="portal1Object">
+                <a-entity
+                    id="portal1"
+                    gltf-model="BoxInstanced.gltf"
+                    scale="0.3 0.3 0.3"
+                    position="0 0.5 0"
+                    rotation="0 0 0"
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear">
+                </a-entity>
+                
+                <a-sphere radius="1" color="#00FFFF" material="opacity: 0.2; transparent: true" position="0 0.5 0"
+                    animation="property: scale; to: 1.3 1.3 1.3; loop: true; dur: 2000; dir: alternate">
+                </a-sphere>
+                
+                <a-text value="PORTAL 1\nFUTURE" align="center" color="#00FFFF" width="2" position="0 1.5 0"></a-text>
+            </a-entity>
+        </a-nft>
+
+        <!-- PORTAL 2: ALP -->
+        <a-nft type="nft" url="alp" smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5" id="portal2Marker" visible="false">
+            <a-entity id="portal2Object">
+                <a-entity
+                    id="portal2"
+                    gltf-model="scene.gltf"
+                    scale="0.02 0.02 0.02"
+                    position="0 0.5 0"
+                    rotation="0 0 0"
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear">
+                </a-entity>
+                
+                <a-sphere radius="1" color="#FFD700" material="opacity: 0.15; transparent: true" position="0 0.5 0"
+                    animation="property: material.opacity; to: 0.05; loop: true; dur: 1500; dir: alternate">
+                </a-sphere>
+                
+                <a-text value="PORTAL 2\nANCIENT" align="center" color="#FFD700" width="2" position="0 1.5 0"></a-text>
+            </a-entity>
+        </a-nft>
+
+        <!-- PORTAL 3: AP -->
+        <a-nft type="nft" url="ap" smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5" id="portal3Marker" visible="false">
+            <a-entity id="portal3Object">
+                <a-entity
+                    id="portal3"
+                    gltf-model="BoxInstanced.gltf"
+                    scale="0.4 0.4 0.4"
+                    position="0 0.7 0"
+                    rotation="0 0 0"
+                    animation="property: rotation; to: 0 360 360; loop: true; dur: 6000; easing: linear"
+                    animation__float="property: position; to: 0 1 0; loop: true; dur: 2000; dir: alternate; easing: easeInOutSine">
+                </a-entity>
+                
+                <a-ring radius-inner="0.5" radius-outer="0.7" color="#FF6600" material="opacity: 0.5; transparent: true; side: double"
+                    position="0 0.7 0" rotation="90 0 0"
+                    animation="property: rotation; to: 90 360 0; loop: true; dur: 3000; easing: linear">
+                </a-ring>
+                
+                <a-text value="PORTAL 3\nINDUSTRIAL" align="center" color="#FF6600" width="2" position="0 2 0"></a-text>
+            </a-entity>
+        </a-nft>
+
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        // Game State
+        const state = { portal1: false, portal2: false, portal3: false };
+        
+        // Stories
+        const stories = {
+            intro: { title: "🌟 WELCOME TO TIME PORTALS", text: "Point camera at PRIZA marker to begin..." },
+            portal1Found: { title: "🔮 PORTAL 1 - FUTURE", text: "TAP the object to activate!" },
+            portal1Done: { title: "✅ PORTAL 1 ACTIVATED", text: "Find ALP marker for Portal 2..." },
+            portal2Found: { title: "⚡ PORTAL 2 - ANCIENT", text: "TAP the object to activate!" },
+            portal2Done: { title: "✅ PORTAL 2 ACTIVATED", text: "Find AP marker for final portal..." },
+            portal3Found: { title: "⚙️ PORTAL 3 - INDUSTRIAL", text: "TAP to complete journey!" },
+            portal3Done: { title: "🎉 JOURNEY COMPLETE!", text: "You traveled through time!" }
+        };
+        
+        // Elements
+        const mainInstructions = document.getElementById('mainInstructions');
+        const hideBtn = document.getElementById('hideInstructionsBtn');
+        const panel = document.getElementById('storyPanel');
+        const title = document.getElementById('storyTitle');
+        const text = document.getElementById('storyText');
+        const tapInstruction = document.getElementById('tapInstruction');
+        const statusEl = document.getElementById('status');
+        const cameraState = document.getElementById('cameraState');
+        const cameraStatus = document.getElementById('cameraStatus');
+        
+        // Hide instructions button
+        hideBtn.addEventListener('click', () => {
+            mainInstructions.style.display = 'none';
+        });
+        
+        // Show story
+        function showStory(key) {
+            const story = stories[key];
+            title.textContent = story.title;
+            text.textContent = story.text;
+            panel.classList.add('show');
+            setTimeout(() => panel.classList.remove('show'), 4000);
+        }
+        
+        // Update progress
+        function updateDot(num, status) {
+            const dot = document.getElementById(`dot${num}`);
+            dot.className = 'portal-dot';
+            if (status === 'active') dot.classList.add('active');
+            if (status === 'completed') dot.classList.add('completed');
+        }
+        
+        // Update debug
+        function updateDebug(portal, status) {
+            document.getElementById(`p${portal}status`).textContent = status;
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            console.log('Page loaded');
+            cameraStatus.classList.add('show');
+            
+            setTimeout(() => {
+                cameraStatus.classList.remove('show');
+                cameraState.textContent = '✅ Active';
+                statusEl.textContent = 'Ready - Point at marker!';
+                showStory('intro');
+            }, 2000);
+        });
+        
+        // PORTAL 1
+        const marker1 = document.getElementById('portal1Marker');
+        let marker1Found = false;
+        
+        marker1.addEventListener('markerFound', () => {
+            console.log('✅ Portal 1 marker detected!');
+            marker1Found = true;
+            cameraState.textContent = '✅ Marker Found!';
+            statusEl.textContent = '🎯 Portal 1 visible';
+            mainInstructions.style.display = 'none';
+            
+            if (!state.portal1) {
+                showStory('portal1Found');
+                tapInstruction.classList.add('show');
+                updateDot(1, 'active');
+                updateDebug(1, '👁️ Visible - TAP IT!');
+            }
+        });
+        
+        marker1.addEventListener('markerLost', () => {
+            console.log('Portal 1 marker lost');
+            marker1Found = false;
+            if (!state.portal1) {
+                cameraState.textContent = '🔍 Searching...';
+                tapInstruction.classList.remove('show');
+            }
+        });
+        
+        document.getElementById('portal1').addEventListener('click', () => {
+            if (!state.portal1) {
+                state.portal1 = true;
+                console.log('🎉 Portal 1 activated!');
+                showStory('portal1Done');
+                updateDot(1, 'completed');
+                updateDebug(1, '✅ Activated');
+                updateDebug(2, '🔓 Unlocked!');
+                tapInstruction.classList.remove('show');
+                document.getElementById('portal2Marker').setAttribute('visible', 'true');
+                
+                const p1 = document.getElementById('portal1Object');
+                p1.setAttribute('animation__activate', {
+                    property: 'scale', to: '1.5 1.5 1.5', dur: 500, dir: 'alternate', loop: 2
+                });
+            }
+        });
+        
+        // PORTAL 2
+        const marker2 = document.getElementById('portal2Marker');
+        marker2.addEventListener('markerFound', () => {
+            console.log('✅ Portal 2 marker detected!');
+            cameraState.textContent = '✅ Marker Found!';
+            statusEl.textContent = '🎯 Portal 2 visible';
+            
+            if (state.portal1 && !state.portal2) {
+                showStory('portal2Found');
+                tapInstruction.classList.add('show');
+                updateDot(2, 'active');
+                updateDebug(2, '👁️ Visible - TAP IT!');
+            }
+        });
+        
+        marker2.addEventListener('markerLost', () => {
+            if (!state.portal2) {
+                cameraState.textContent = '🔍 Searching...';
+                tapInstruction.classList.remove('show');
+            }
+        });
+        
+        document.getElementById('portal2').addEventListener('click', () => {
+            if (state.portal1 && !state.portal2) {
+                state.portal2 = true;
+                console.log('🎉 Portal 2 activated!');
+                showStory('portal2Done');
+                updateDot(2, 'completed');
+                updateDebug(2, '✅ Activated');
+                updateDebug(3, '🔓 Unlocked!');
+                tapInstruction.classList.remove('show');
+                document.getElementById('portal3Marker').setAttribute('visible', 'true');
+                
+                const p2 = document.getElementById('portal2Object');
+                p2.setAttribute('animation__activate', {
+                    property: 'scale', to: '1.5 1.5 1.5', dur: 500, dir: 'alternate', loop: 2
+                });
+            }
+        });
+        
+        // PORTAL 3
+        const marker3 = document.getElementById('portal3Marker');
+        marker3.addEventListener('markerFound', () => {
+            console.log('✅ Portal 3 marker detected!');
+            cameraState.textContent = '✅ Marker Found!';
+            statusEl.textContent = '🎯 Portal 3 visible';
+            
+            if (state.portal2 && !state.portal3) {
+                showStory('portal3Found');
+                tapInstruction.classList.add('show');
+                updateDot(3, 'active');
+                updateDebug(3, '👁️ Visible - TAP IT!');
+            }
+        });
+        
+        marker3.addEventListener('markerLost', () => {
+            if (!state.portal3) {
+                cameraState.textContent = '🔍 Searching...';
+                tapInstruction.classList.remove('show');
+            }
+        });
+        
+        document.getElementById('portal3').addEventListener('click', () => {
+            if (state.portal2 && !state.portal3) {
+                state.portal3 = true;
+                console.log('🎉🎉🎉 Portal 3 activated! JOURNEY COMPLETE!');
+                showStory('portal3Done');
+                updateDot(3, 'completed');
+                updateDebug(3, '✅ Complete!');
+                statusEl.textContent = '🏆 ALL PORTALS DONE!';
+                tapInstruction.classList.remove('show');
+                
+                const p3 = document.getElementById('portal3Object');
+                p3.setAttribute('animation__activate', {
+                    property: 'scale', to: '2 2 2', dur: 500, dir: 'alternate', loop: 3
+                });
+                
+                setTimeout(() => {
+                    alert('🎉 CONGRATULATIONS!\n\nYou completed the Time Portal journey!\n\nAll 3 portals activated! ✅✅✅');
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html>
