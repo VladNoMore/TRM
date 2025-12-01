@@ -2,118 +2,151 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AR Time Portals - Grade 10 Version</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Time Portals - Laptop & Mobile</title>
     
     <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
     
     <style>
-        * { -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; }
         body { 
-            margin: 0; 
             overflow: hidden; 
             font-family: Arial, sans-serif;
         }
         
-        /* Main info box */
-        #info {
-            position: fixed;
-            top: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.85);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 10px;
-            text-align: center;
-            max-width: 85%;
-            z-index: 100;
-            font-size: 14px;
-        }
-        
-        /* Debug panel */
-        #debug {
-            position: fixed;
-            top: 80px;
-            left: 10px;
-            background: rgba(0,0,0,0.7);
-            color: lime;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 11px;
-            font-family: monospace;
-            z-index: 100;
-            max-width: 200px;
-        }
-        
-        /* Progress dots */
-        #progress {
-            position: fixed;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
-            z-index: 100;
-        }
-        
-        .dot {
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            border: 3px solid white;
-        }
-        
-        .dot.active { 
-            background: yellow; 
-            box-shadow: 0 0 15px yellow;
-            animation: pulse 1s infinite;
-        }
-        .dot.done { background: lime; }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-        }
-        
-        /* Start screen */
-        #start {
+        /* Mode selector (laptop/phone) */
+        #modeSelect {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(0,0,0,0.95);
             color: white;
-            padding: 30px;
+            padding: 40px;
             border-radius: 15px;
             text-align: center;
-            z-index: 200;
-            max-width: 85%;
+            z-index: 1000;
         }
         
-        #start h1 {
-            font-size: 24px;
-            margin: 0 0 15px 0;
+        #modeSelect h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
         }
         
-        #start .story {
-            font-size: 13px;
-            color: #ccc;
-            margin: 10px 0;
-            line-height: 1.4;
-        }
-        
-        #start button {
-            margin-top: 20px;
-            padding: 15px 40px;
+        #modeSelect button {
+            display: block;
+            width: 100%;
+            margin: 15px 0;
+            padding: 20px;
             font-size: 18px;
-            background: #4CAF50;
+            border: 2px solid white;
+            background: transparent;
             color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        #modeSelect button:hover {
+            background: white;
+            color: black;
+        }
+        
+        /* Info box */
+        #info {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 100;
+            font-size: 16px;
+            display: none;
+            max-width: 80%;
+        }
+        
+        /* Progress dots */
+        #progress {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            gap: 15px;
+            z-index: 100;
+        }
+        
+        .dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            border: 3px solid white;
+            display: inline-block;
+        }
+        
+        .dot.active { 
+            background: yellow; 
+            box-shadow: 0 0 20px yellow;
+            animation: pulse 1s infinite;
+        }
+        .dot.done { background: lime; }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        /* Demo mode controls */
+        #demoControls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        #demoControls button {
+            padding: 15px 25px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.9);
             border: none;
             border-radius: 8px;
             font-weight: bold;
+            cursor: pointer;
+        }
+        
+        #demoControls button:active {
+            transform: scale(0.95);
+        }
+        
+        /* Tap hint */
+        #taphint {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            color: black;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 16px;
+            display: none;
+            z-index: 100;
+            animation: bounce 0.8s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
         }
         
         /* Tap zone */
@@ -127,245 +160,314 @@
             display: none;
         }
         
-        /* Tap hint */
-        #taphint {
-            position: fixed;
-            bottom: 90px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            color: black;
-            padding: 15px 30px;
-            border-radius: 25px;
-            font-weight: bold;
-            font-size: 16px;
-            display: none;
-            z-index: 100;
-            animation: bounce 0.5s infinite;
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(-5px); }
-        }
-        
         /* Help button */
         #help {
             position: fixed;
-            top: 15px;
-            right: 15px;
-            width: 30px;
-            height: 30px;
-            background: rgba(255,255,255,0.9);
-            color: black;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 20px;
             font-weight: bold;
-            z-index: 101;
             cursor: pointer;
+            z-index: 101;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <!-- Start screen -->
-    <div id="start">
+    <!-- Mode selection -->
+    <div id="modeSelect">
         <h1>🌟 Time Portals 🌟</h1>
-        <div class="story">
-            Travel through time by activating 3 portals!<br><br>
-            <strong>Portal 1 (PRIZA)</strong>: The Future<br>
-            <strong>Portal 2 (ALP)</strong>: Ancient Times<br>
-            <strong>Portal 3 (AP)</strong>: Industrial Era<br><br>
-            Point camera at each marker and tap!
-        </div>
-        <button onclick="startAR()">START ADVENTURE</button>
+        <p style="margin: 20px 0; color: #ccc;">Choose your mode:</p>
+        <button onclick="startDemo()">
+            💻 DEMO MODE<br>
+            <small style="font-size: 13px; font-weight: normal;">For laptops / presentations</small>
+        </button>
+        <button onclick="startAR()">
+            📱 AR MODE<br>
+            <small style="font-size: 13px; font-weight: normal;">For phones with camera</small>
+        </button>
     </div>
 
-    <!-- Info box -->
-    <div id="info" style="display:none;">
-        <div id="infoText">Point at PRIZA marker</div>
+    <!-- Info -->
+    <div id="info">Point at PRIZA marker</div>
+    
+    <!-- Help -->
+    <div id="help" onclick="showHelp()">?</div>
+    
+    <!-- Progress -->
+    <div id="progress">
+        <div class="dot" id="d1"></div>
+        <div class="dot" id="d2"></div>
+        <div class="dot" id="d3"></div>
     </div>
     
-    <!-- Debug panel (shows marker detection) -->
-    <div id="debug" style="display:none;">
-        DEBUG MODE<br>
-        <span id="debugText">Waiting...</span>
-    </div>
-    
-    <!-- Help button -->
-    <div id="help" onclick="toggleHelp()">?</div>
-    
-    <!-- Progress dots -->
-    <div id="progress" style="display:none;">
-        <div class="dot" id="d1" title="Portal 1"></div>
-        <div class="dot" id="d2" title="Portal 2"></div>
-        <div class="dot" id="d3" title="Portal 3"></div>
+    <!-- Demo controls -->
+    <div id="demoControls">
+        <button onclick="showPortal(1)" id="btn1">Portal 1</button>
+        <button onclick="showPortal(2)" id="btn2">Portal 2</button>
+        <button onclick="showPortal(3)" id="btn3">Portal 3</button>
     </div>
     
     <!-- Tap hint -->
-    <div id="taphint">👆 TAP SCREEN NOW!</div>
+    <div id="taphint">👆 TAP SCREEN!</div>
     
     <!-- Tap zone -->
-    <div id="tapzone" ontouchstart="tap()" onclick="tap()"></div>
+    <div id="tapzone" onclick="tap()"></div>
 
     <!-- AR Scene -->
     <a-scene
+        id="scene"
         vr-mode-ui="enabled: false"
-        renderer="antialias: false; precision: mediump; alpha: true"
+        renderer="antialias: true; colorManagement: true"
         embedded
-        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
+        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
         
-        <!-- PORTAL 1: FUTURE (Cyan cube with glowing aura) -->
-        <a-nft type="nft" url="priza" smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5" id="m1">
-            <a-entity>
-                <!-- Main cube -->
+        <!-- PORTAL 1: FUTURE (Cyan) -->
+        <a-nft type="nft" url="priza" smooth="true" smoothCount="10" id="m1">
+            <a-entity id="portal1" visible="false">
+                <!-- Spinning cube with metallic effect -->
                 <a-box 
                     color="#00FFFF" 
-                    metalness="0.8"
-                    opacity="0.9" 
-                    scale="0.5 0.5 0.5" 
-                    position="0 0.5 0"
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 4000; easing: linear">
+                    metalness="0.9"
+                    roughness="0.2"
+                    width="0.8" height="0.8" depth="0.8"
+                    position="0 0.8 0"
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 3000; easing: linear">
                 </a-box>
-                <!-- Glowing sphere -->
+                
+                <!-- Pulsing glow sphere -->
                 <a-sphere 
-                    radius="0.6" 
+                    radius="1" 
                     color="#00FFFF" 
-                    opacity="0.2" 
-                    position="0 0.5 0"
-                    animation="property: scale; to: 1.3 1.3 1.3; loop: true; dur: 2000; dir: alternate">
+                    opacity="0.25" 
+                    position="0 0.8 0"
+                    animation="property: scale; to: 1.4 1.4 1.4; loop: true; dur: 1500; dir: alternate; easing: easeInOutQuad">
                 </a-sphere>
+                
+                <!-- Rotating rings -->
+                <a-ring 
+                    radius-inner="0.9" 
+                    radius-outer="1.1" 
+                    color="#00FFFF" 
+                    opacity="0.6"
+                    position="0 0.8 0"
+                    rotation="90 0 0"
+                    animation="property: rotation; to: 90 360 0; loop: true; dur: 4000; easing: linear">
+                </a-ring>
+                
                 <!-- Label -->
                 <a-text 
                     value="THE FUTURE" 
                     align="center" 
                     color="#00FFFF" 
-                    width="2" 
-                    position="0 1.3 0">
+                    width="3" 
+                    position="0 2 0">
                 </a-text>
             </a-entity>
         </a-nft>
 
-        <!-- PORTAL 2: ANCIENT (Gold sphere with rings) -->
-        <a-nft type="nft" url="alp" smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5" id="m2">
-            <a-entity>
-                <!-- Main sphere -->
+        <!-- PORTAL 2: ANCIENT (Gold) -->
+        <a-nft type="nft" url="alp" smooth="true" smoothCount="10" id="m2">
+            <a-entity id="portal2" visible="false">
+                <!-- Glowing sphere -->
                 <a-sphere 
+                    radius="0.6" 
                     color="#FFD700" 
-                    metalness="0.6"
-                    opacity="0.85" 
-                    radius="0.4" 
-                    position="0 0.5 0"
-                    animation="property: scale; to: 1.2 1.2 1.2; loop: true; dur: 2000; dir: alternate">
+                    metalness="0.8"
+                    roughness="0.3"
+                    position="0 0.8 0"
+                    animation="property: scale; to: 1.3 1.3 1.3; loop: true; dur: 2000; dir: alternate; easing: easeInOutQuad">
                 </a-sphere>
-                <!-- Ring -->
+                
+                <!-- Multiple rotating rings -->
                 <a-ring 
-                    radius-inner="0.5" 
-                    radius-outer="0.7" 
+                    radius-inner="0.7" 
+                    radius-outer="0.9" 
                     color="#FFD700" 
-                    opacity="0.4"
-                    position="0 0.5 0"
+                    opacity="0.5"
+                    position="0 0.8 0"
                     rotation="90 0 0"
                     animation="property: rotation; to: 90 360 0; loop: true; dur: 5000; easing: linear">
                 </a-ring>
+                
+                <a-ring 
+                    radius-inner="0.9" 
+                    radius-outer="1.1" 
+                    color="#FFD700" 
+                    opacity="0.4"
+                    position="0 0.8 0"
+                    rotation="45 0 0"
+                    animation="property: rotation; to: 45 0 360; loop: true; dur: 6000; easing: linear">
+                </a-ring>
+                
+                <!-- Particles effect -->
+                <a-entity 
+                    particle-system="preset: dust; color: #FFD700; particleCount: 50"
+                    position="0 0.8 0">
+                </a-entity>
+                
                 <!-- Label -->
                 <a-text 
-                    value="ANCIENT" 
+                    value="ANCIENT TIMES" 
                     align="center" 
                     color="#FFD700" 
-                    width="2" 
-                    position="0 1.3 0">
+                    width="3" 
+                    position="0 2 0">
                 </a-text>
             </a-entity>
         </a-nft>
 
-        <!-- PORTAL 3: INDUSTRIAL (Orange cone with rotating ring) -->
-        <a-nft type="nft" url="ap" smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5" id="m3">
-            <a-entity>
-                <!-- Main cone -->
+        <!-- PORTAL 3: INDUSTRIAL (Orange) -->
+        <a-nft type="nft" url="ap" smooth="true" smoothCount="10" id="m3">
+            <a-entity id="portal3" visible="false">
+                <!-- Spinning cone -->
                 <a-cone 
-                    color="#FF6600" 
-                    opacity="0.85" 
-                    radius-bottom="0.4" 
-                    radius-top="0.1" 
-                    height="0.8" 
-                    position="0 0.5 0"
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 3000; easing: linear">
+                    radius-bottom="0.6" 
+                    radius-top="0.2" 
+                    height="1.2" 
+                    color="#FF6600"
+                    metalness="0.7"
+                    roughness="0.4"
+                    position="0 0.8 0"
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 2500; easing: linear">
                 </a-cone>
-                <!-- Rotating ring -->
-                <a-ring 
-                    radius-inner="0.3" 
-                    radius-outer="0.5" 
+                
+                <!-- 3D rotating ring -->
+                <a-torus 
+                    radius="0.8" 
+                    radius-tubular="0.1" 
                     color="#FF6600" 
-                    opacity="0.6"
-                    position="0 0.7 0"
-                    rotation="0 0 0"
-                    animation="property: rotation; to: 0 360 360; loop: true; dur: 4000; easing: linear">
-                </a-ring>
+                    position="0 1 0"
+                    animation="property: rotation; to: 360 0 360; loop: true; dur: 4000; easing: linear">
+                </a-torus>
+                
+                <!-- Energy particles -->
+                <a-entity 
+                    particle-system="preset: default; color: #FF6600; particleCount: 30"
+                    position="0 0.8 0">
+                </a-entity>
+                
                 <!-- Label -->
                 <a-text 
-                    value="INDUSTRIAL" 
+                    value="INDUSTRIAL ERA" 
                     align="center" 
                     color="#FF6600" 
-                    width="2" 
-                    position="0 1.5 0">
+                    width="3" 
+                    position="0 2 0">
                 </a-text>
             </a-entity>
         </a-nft>
+
+        <!-- Demo mode: Manual portal display -->
+        <a-entity id="demoPortal" position="0 0 -3" visible="false">
+            <!-- Will hold cloned portals for demo -->
+        </a-entity>
 
         <a-entity camera></a-entity>
     </a-scene>
 
     <script>
-        // DEBUG MODE - Set to true to see marker detection
-        const DEBUG = true;
-        
         // Game state
-        const state = { 
-            active: false, 
-            p1: false, 
-            p2: false, 
-            p3: false, 
-            current: null,
-            markersSeen: {m1: false, m2: false, m3: false}
+        const state = {
+            mode: null, // 'demo' or 'ar'
+            active: false,
+            p1: false,
+            p2: false,
+            p3: false,
+            current: null
         };
         
-        // Get elements
-        const debugPanel = document.getElementById('debug');
-        const infoBox = document.getElementById('info');
-        const infoText = document.getElementById('infoText');
-        const debugText = document.getElementById('debugText');
+        // Elements
+        const modeSelect = document.getElementById('modeSelect');
+        const info = document.getElementById('info');
+        const progress = document.getElementById('progress');
+        const demoControls = document.getElementById('demoControls');
         const taphint = document.getElementById('taphint');
         const tapzone = document.getElementById('tapzone');
-        const progress = document.getElementById('progress');
+        const help = document.getElementById('help');
         
-        if (DEBUG) debugPanel.style.display = 'block';
+        // Portal entities
+        const portal1 = document.getElementById('portal1');
+        const portal2 = document.getElementById('portal2');
+        const portal3 = document.getElementById('portal3');
+        const demoPortal = document.getElementById('demoPortal');
         
-        // Start AR
-        function startAR() {
-            document.getElementById('start').style.display = 'none';
-            infoBox.style.display = 'block';
-            progress.style.display = 'flex';
+        // Markers
+        const m1 = document.getElementById('m1');
+        const m2 = document.getElementById('m2');
+        const m3 = document.getElementById('m3');
+        
+        // Start demo mode (laptop)
+        function startDemo() {
+            state.mode = 'demo';
             state.active = true;
+            modeSelect.style.display = 'none';
+            info.style.display = 'block';
+            progress.style.display = 'flex';
+            demoControls.style.display = 'flex';
+            help.style.display = 'flex';
+            
+            updateInfo('💻 DEMO MODE - Click buttons below to show portals');
+            
+            // Disable AR markers in demo mode
+            const scene = document.getElementById('scene');
+            scene.setAttribute('arjs', 'sourceType: none');
+        }
+        
+        // Start AR mode (phone)
+        function startAR() {
+            state.mode = 'ar';
+            state.active = true;
+            modeSelect.style.display = 'none';
+            info.style.display = 'block';
+            progress.style.display = 'flex';
+            help.style.display = 'flex';
+            
             updateInfo('Point camera at PRIZA marker');
-            log('Game started. Looking for PRIZA...');
+            
+            // Set up marker listeners
+            setupMarkerListeners();
         }
         
-        // Update info box
+        // Show portal in demo mode
+        function showPortal(num) {
+            if (state.mode !== 'demo') return;
+            
+            // Hide all portals first
+            demoPortal.innerHTML = '';
+            demoPortal.setAttribute('visible', 'true');
+            
+            // Clone and show requested portal
+            let source;
+            if (num === 1) source = portal1;
+            else if (num === 2) source = portal2;
+            else if (num === 3) source = portal3;
+            
+            const clone = source.cloneNode(true);
+            clone.setAttribute('visible', 'true');
+            clone.setAttribute('position', '0 0 0');
+            demoPortal.appendChild(clone);
+            
+            // Update state
+            state.current = num;
+            updateDot(num, 'active');
+            updateInfo(`Portal ${num} shown - Tap screen to activate!`);
+            showTapHint(true);
+        }
+        
+        // Update info
         function updateInfo(text) {
-            infoText.textContent = text;
+            info.textContent = text;
         }
         
-        // Debug log
-        function log(msg) {
-            if (DEBUG) {
-                console.log(msg);
-                debugText.innerHTML = msg + '<br>' + debugText.innerHTML.split('<br>').slice(0, 5).join('<br>');
-            }
-        }
-        
-        // Update progress dots
+        // Update dots
         function updateDot(n, status) {
             const dot = document.getElementById('d' + n);
             dot.className = 'dot';
@@ -374,150 +476,120 @@
         }
         
         // Show/hide tap hint
-        function showTap(show) {
+        function showTapHint(show) {
             taphint.style.display = show ? 'block' : 'none';
             tapzone.style.display = show ? 'block' : 'none';
         }
         
         // Handle tap
         function tap() {
-            log('TAP detected! Current: ' + state.current);
-            
             if (state.current === 1 && !state.p1) {
-                log('Activating Portal 1!');
                 state.p1 = true;
                 updateDot(1, 'done');
-                updateInfo('✅ Portal 1 ACTIVATED! Now find ALP marker');
-                showTap(false);
-                setTimeout(() => updateInfo('Look for ALP marker (Portal 2)'), 2000);
-            } 
-            else if (state.current === 2 && state.p1 && !state.p2) {
-                log('Activating Portal 2!');
+                updateInfo('✅ Portal 1 ACTIVATED! ' + (state.mode === 'demo' ? 'Click Portal 2' : 'Find ALP marker'));
+                showTapHint(false);
+                if (state.mode === 'demo') {
+                    document.getElementById('btn2').style.background = 'yellow';
+                }
+            } else if (state.current === 2 && state.p1 && !state.p2) {
                 state.p2 = true;
                 updateDot(2, 'done');
-                updateInfo('✅ Portal 2 ACTIVATED! Now find AP marker');
-                showTap(false);
-                setTimeout(() => updateInfo('Look for AP marker (Portal 3)'), 2000);
-            } 
-            else if (state.current === 3 && state.p2 && !state.p3) {
-                log('Activating Portal 3!');
+                updateInfo('✅ Portal 2 ACTIVATED! ' + (state.mode === 'demo' ? 'Click Portal 3' : 'Find AP marker'));
+                showTapHint(false);
+                if (state.mode === 'demo') {
+                    document.getElementById('btn3').style.background = 'yellow';
+                }
+            } else if (state.current === 3 && state.p2 && !state.p3) {
                 state.p3 = true;
                 updateDot(3, 'done');
-                updateInfo('🎉 ALL PORTALS ACTIVATED! TIME TRAVEL COMPLETE!');
-                showTap(false);
+                updateInfo('🎉 ALL PORTALS COMPLETE! Time travel successful!');
+                showTapHint(false);
                 setTimeout(() => {
-                    alert('🎉 CONGRATULATIONS!\n\nYou successfully activated all 3 Time Portals:\n✅ The Future\n✅ Ancient Times\n✅ Industrial Era\n\nYou are a Time Traveler!');
-                }, 1500);
-            }
-            else {
-                log('Tap ignored - wrong state');
+                    alert('🎉 CONGRATULATIONS!\n\nYou activated all 3 Time Portals:\n✅ The Future\n✅ Ancient Times\n✅ Industrial Era\n\nYou are a Time Traveler!');
+                }, 1000);
             }
         }
         
-        // Help toggle
-        function toggleHelp() {
-            alert('HOW TO PLAY:\n\n1. Point camera at PRIZA marker\n2. Tap screen when portal appears\n3. Repeat for ALP and AP markers\n\nTROUBLESHOOTING:\n- Use good lighting\n- Hold phone steady\n- Keep marker flat\n- Distance: 20-40cm from marker');
-        }
-        
-        // MARKER 1 - PRIZA (Future)
-        document.getElementById('m1').addEventListener('markerFound', () => {
-            state.markersSeen.m1 = true;
-            log('PRIZA FOUND!');
-            
-            if (!state.active) return;
-            
-            state.current = 1;
-            if (!state.p1) {
-                updateInfo('🔵 PORTAL 1 FOUND - TAP SCREEN!');
-                updateDot(1, 'active');
-                showTap(true);
-                log('Portal 1 ready - tap to activate');
-            }
-        });
-        
-        document.getElementById('m1').addEventListener('markerLost', () => {
-            log('PRIZA LOST');
-            if (state.current === 1) {
-                state.current = null;
+        // Setup marker listeners for AR mode
+        function setupMarkerListeners() {
+            // Marker 1 - PRIZA
+            m1.addEventListener('markerFound', () => {
+                if (!state.active) return;
+                portal1.setAttribute('visible', 'true');
+                state.current = 1;
                 if (!state.p1) {
-                    updateInfo('Marker lost - point at PRIZA again');
-                    showTap(false);
+                    updateInfo('🔵 PORTAL 1 FOUND - TAP SCREEN!');
+                    updateDot(1, 'active');
+                    showTapHint(true);
                 }
-            }
-        });
-        
-        // MARKER 2 - ALP (Ancient)
-        document.getElementById('m2').addEventListener('markerFound', () => {
-            state.markersSeen.m2 = true;
-            log('ALP FOUND!');
+            });
             
-            if (!state.active) return;
-            
-            if (!state.p1) {
-                updateInfo('⚠️ Activate Portal 1 first (PRIZA)');
-                log('Portal 2 locked - need Portal 1');
-                return;
-            }
-            
-            state.current = 2;
-            if (!state.p2) {
-                updateInfo('🟡 PORTAL 2 FOUND - TAP SCREEN!');
-                updateDot(2, 'active');
-                showTap(true);
-                log('Portal 2 ready - tap to activate');
-            }
-        });
-        
-        document.getElementById('m2').addEventListener('markerLost', () => {
-            log('ALP LOST');
-            if (state.current === 2) {
-                state.current = null;
-                if (state.p1 && !state.p2) {
-                    updateInfo('Marker lost - point at ALP again');
-                    showTap(false);
+            m1.addEventListener('markerLost', () => {
+                portal1.setAttribute('visible', 'false');
+                if (state.current === 1 && !state.p1) {
+                    state.current = null;
+                    updateInfo('Marker lost - point at PRIZA');
+                    showTapHint(false);
                 }
-            }
-        });
-        
-        // MARKER 3 - AP (Industrial)
-        document.getElementById('m3').addEventListener('markerFound', () => {
-            state.markersSeen.m3 = true;
-            log('AP FOUND!');
+            });
             
-            if (!state.active) return;
-            
-            if (!state.p2) {
-                updateInfo('⚠️ Activate Portal 2 first (ALP)');
-                log('Portal 3 locked - need Portal 2');
-                return;
-            }
-            
-            state.current = 3;
-            if (!state.p3) {
-                updateInfo('🟠 PORTAL 3 FOUND - TAP SCREEN!');
-                updateDot(3, 'active');
-                showTap(true);
-                log('Portal 3 ready - tap to activate');
-            }
-        });
-        
-        document.getElementById('m3').addEventListener('markerLost', () => {
-            log('AP LOST');
-            if (state.current === 3) {
-                state.current = null;
-                if (state.p2 && !state.p3) {
-                    updateInfo('Marker lost - point at AP again');
-                    showTap(false);
+            // Marker 2 - ALP
+            m2.addEventListener('markerFound', () => {
+                if (!state.active || !state.p1) {
+                    if (state.active) updateInfo('⚠️ Activate Portal 1 first!');
+                    return;
                 }
-            }
-        });
+                portal2.setAttribute('visible', 'true');
+                state.current = 2;
+                if (!state.p2) {
+                    updateInfo('🟡 PORTAL 2 FOUND - TAP SCREEN!');
+                    updateDot(2, 'active');
+                    showTapHint(true);
+                }
+            });
+            
+            m2.addEventListener('markerLost', () => {
+                portal2.setAttribute('visible', 'false');
+                if (state.current === 2 && state.p1 && !state.p2) {
+                    state.current = null;
+                    updateInfo('Marker lost - point at ALP');
+                    showTapHint(false);
+                }
+            });
+            
+            // Marker 3 - AP
+            m3.addEventListener('markerFound', () => {
+                if (!state.active || !state.p2) {
+                    if (state.active) updateInfo('⚠️ Activate Portal 2 first!');
+                    return;
+                }
+                portal3.setAttribute('visible', 'true');
+                state.current = 3;
+                if (!state.p3) {
+                    updateInfo('🟠 PORTAL 3 FOUND - TAP SCREEN!');
+                    updateDot(3, 'active');
+                    showTapHint(true);
+                }
+            });
+            
+            m3.addEventListener('markerLost', () => {
+                portal3.setAttribute('visible', 'false');
+                if (state.current === 3 && state.p2 && !state.p3) {
+                    state.current = null;
+                    updateInfo('Marker lost - point at AP');
+                    showTapHint(false);
+                }
+            });
+        }
         
-        // Check markers after 5 seconds
-        setTimeout(() => {
-            if (state.active && !state.markersSeen.m1) {
-                log('HELP: No markers detected yet. Check lighting and marker quality.');
-            }
-        }, 5000);
+        // Show help
+        function showHelp() {
+            const helpText = state.mode === 'demo' 
+                ? 'DEMO MODE:\n\n1. Click "Portal 1" button\n2. Tap screen to activate\n3. Repeat for Portal 2 and 3\n\nThis mode is for presentations without AR markers.'
+                : 'AR MODE:\n\n1. Point camera at PRIZA marker\n2. Tap screen when portal appears\n3. Repeat for ALP and AP markers\n\nNeed good lighting and steady hands!';
+            
+            alert(helpText);
+        }
     </script>
 </body>
 </html>
