@@ -3,592 +3,481 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Time Portals - Laptop & Mobile</title>
+    <title>Time Portals - Presentation Mode</title>
     
-    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    <!-- Only A-Frame (no AR.js) -->
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     
     <style>
         * { margin: 0; padding: 0; }
         body { 
             overflow: hidden; 
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
+            background: #000;
         }
         
-        /* Mode selector (laptop/phone) */
-        #modeSelect {
+        /* Welcome screen */
+        #welcome {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.95);
-            color: white;
-            padding: 40px;
-            border-radius: 15px;
-            text-align: center;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             z-index: 1000;
+            color: white;
         }
         
-        #modeSelect h1 {
-            font-size: 28px;
+        #welcome h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+        
+        #welcome p {
+            font-size: 18px;
+            margin: 10px 0;
+            opacity: 0.9;
+        }
+        
+        #welcome button {
+            margin-top: 40px;
+            padding: 20px 50px;
+            font-size: 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        
+        #welcome button:hover {
+            transform: scale(1.05);
+        }
+        
+        /* HUD */
+        #hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 30px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            z-index: 100;
+            display: none;
+        }
+        
+        #info {
+            font-size: 24px;
+            color: white;
+            text-align: center;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
             margin-bottom: 20px;
         }
         
-        #modeSelect button {
-            display: block;
-            width: 100%;
-            margin: 15px 0;
-            padding: 20px;
-            font-size: 18px;
-            border: 2px solid white;
-            background: transparent;
+        #progress {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .portal-status {
+            padding: 15px 30px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px;
             color: white;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .portal-status.active {
+            background: rgba(255,215,0,0.3);
+            border-color: gold;
+            box-shadow: 0 0 20px gold;
+        }
+        
+        .portal-status.done {
+            background: rgba(0,255,0,0.3);
+            border-color: lime;
+        }
+        
+        /* Controls */
+        #controls {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: none;
+        }
+        
+        #controls button {
+            padding: 20px 40px;
+            margin: 0 10px;
+            font-size: 18px;
+            background: rgba(255,255,255,0.9);
+            border: none;
             border-radius: 10px;
             cursor: pointer;
             font-weight: bold;
+            transition: all 0.2s;
         }
         
-        #modeSelect button:hover {
-            background: white;
-            color: black;
+        #controls button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
         }
         
-        /* Info box */
-        #info {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.85);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            text-align: center;
-            z-index: 100;
-            font-size: 16px;
-            display: none;
-            max-width: 80%;
+        #controls button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
         }
         
-        /* Progress dots */
-        #progress {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: none;
-            gap: 15px;
-            z-index: 100;
-        }
-        
-        .dot {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            border: 3px solid white;
-            display: inline-block;
-        }
-        
-        .dot.active { 
-            background: yellow; 
-            box-shadow: 0 0 20px yellow;
+        #controls button.highlight {
+            background: gold;
             animation: pulse 1s infinite;
         }
-        .dot.done { background: lime; }
         
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
+            50% { transform: scale(1.1); }
         }
         
-        /* Demo mode controls */
-        #demoControls {
+        /* Instructions */
+        #instructions {
             position: fixed;
-            bottom: 30px;
+            bottom: 150px;
             left: 50%;
             transform: translateX(-50%);
-            display: none;
-            gap: 10px;
-            z-index: 100;
-        }
-        
-        #demoControls button {
-            padding: 15px 25px;
-            font-size: 16px;
-            background: rgba(255,255,255,0.9);
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        #demoControls button:active {
-            transform: scale(0.95);
-        }
-        
-        /* Tap hint */
-        #taphint {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            color: black;
+            background: rgba(0,0,0,0.8);
+            color: white;
             padding: 15px 30px;
-            border-radius: 25px;
-            font-weight: bold;
-            font-size: 16px;
-            display: none;
+            border-radius: 10px;
+            font-size: 18px;
+            text-align: center;
             z-index: 100;
-            animation: bounce 0.8s infinite;
+            display: none;
+            animation: bounce 1s infinite;
         }
         
         @keyframes bounce {
             0%, 100% { transform: translateX(-50%) translateY(0); }
             50% { transform: translateX(-50%) translateY(-10px); }
         }
-        
-        /* Tap zone */
-        #tapzone {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 50;
-            display: none;
-        }
-        
-        /* Help button */
-        #help {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 40px;
-            height: 40px;
-            background: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 101;
-            display: none;
-        }
     </style>
 </head>
 <body>
-    <!-- Mode selection -->
-    <div id="modeSelect">
-        <h1>🌟 Time Portals 🌟</h1>
-        <p style="margin: 20px 0; color: #ccc;">Choose your mode:</p>
-        <button onclick="startDemo()">
-            💻 DEMO MODE<br>
-            <small style="font-size: 13px; font-weight: normal;">For laptops / presentations</small>
-        </button>
-        <button onclick="startAR()">
-            📱 AR MODE<br>
-            <small style="font-size: 13px; font-weight: normal;">For phones with camera</small>
-        </button>
+    <!-- Welcome screen -->
+    <div id="welcome">
+        <h1>🌟 TIME PORTALS 🌟</h1>
+        <p>Interactive 3D Time Travel Experience</p>
+        <p style="font-size: 14px; margin-top: 20px;">
+            Activate 3 portals to travel through time:<br>
+            <strong>Future → Ancient → Industrial</strong>
+        </p>
+        <button onclick="startExperience()">BEGIN JOURNEY</button>
     </div>
 
-    <!-- Info -->
-    <div id="info">Point at PRIZA marker</div>
-    
-    <!-- Help -->
-    <div id="help" onclick="showHelp()">?</div>
-    
-    <!-- Progress -->
-    <div id="progress">
-        <div class="dot" id="d1"></div>
-        <div class="dot" id="d2"></div>
-        <div class="dot" id="d3"></div>
+    <!-- HUD -->
+    <div id="hud">
+        <div id="info">Click "Activate Portal 1" to begin</div>
+        <div id="progress">
+            <div class="portal-status" id="status1">🔵 Portal 1: Future</div>
+            <div class="portal-status" id="status2">🟡 Portal 2: Ancient</div>
+            <div class="portal-status" id="status3">🟠 Portal 3: Industrial</div>
+        </div>
     </div>
-    
-    <!-- Demo controls -->
-    <div id="demoControls">
-        <button onclick="showPortal(1)" id="btn1">Portal 1</button>
-        <button onclick="showPortal(2)" id="btn2">Portal 2</button>
-        <button onclick="showPortal(3)" id="btn3">Portal 3</button>
-    </div>
-    
-    <!-- Tap hint -->
-    <div id="taphint">👆 TAP SCREEN!</div>
-    
-    <!-- Tap zone -->
-    <div id="tapzone" onclick="tap()"></div>
 
-    <!-- AR Scene -->
-    <a-scene
-        id="scene"
-        vr-mode-ui="enabled: false"
-        renderer="antialias: true; colorManagement: true"
-        embedded
-        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
-        
+    <!-- Instructions -->
+    <div id="instructions">Click the button below!</div>
+
+    <!-- Controls -->
+    <div id="controls">
+        <button id="btn1" onclick="activatePortal(1)">Activate Portal 1</button>
+        <button id="btn2" onclick="activatePortal(2)" disabled>Activate Portal 2</button>
+        <button id="btn3" onclick="activatePortal(3)" disabled>Activate Portal 3</button>
+    </div>
+
+    <!-- 3D Scene -->
+    <a-scene background="color: #000">
+        <!-- Camera with smooth movement -->
+        <a-entity id="camera" camera position="0 1.6 3" look-controls="enabled: false"></a-entity>
+
+        <!-- Lighting -->
+        <a-light type="ambient" intensity="0.4"></a-light>
+        <a-light type="directional" intensity="0.6" position="2 4 2"></a-light>
+        <a-light type="point" intensity="1" position="0 2 0" color="#fff"></a-light>
+
         <!-- PORTAL 1: FUTURE (Cyan) -->
-        <a-nft type="nft" url="priza" smooth="true" smoothCount="10" id="m1">
-            <a-entity id="portal1" visible="false">
-                <!-- Spinning cube with metallic effect -->
-                <a-box 
-                    color="#00FFFF" 
-                    metalness="0.9"
-                    roughness="0.2"
-                    width="0.8" height="0.8" depth="0.8"
-                    position="0 0.8 0"
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 3000; easing: linear">
-                </a-box>
-                
-                <!-- Pulsing glow sphere -->
-                <a-sphere 
-                    radius="1" 
-                    color="#00FFFF" 
-                    opacity="0.25" 
-                    position="0 0.8 0"
-                    animation="property: scale; to: 1.4 1.4 1.4; loop: true; dur: 1500; dir: alternate; easing: easeInOutQuad">
-                </a-sphere>
-                
-                <!-- Rotating rings -->
-                <a-ring 
-                    radius-inner="0.9" 
-                    radius-outer="1.1" 
-                    color="#00FFFF" 
-                    opacity="0.6"
-                    position="0 0.8 0"
-                    rotation="90 0 0"
-                    animation="property: rotation; to: 90 360 0; loop: true; dur: 4000; easing: linear">
-                </a-ring>
-                
-                <!-- Label -->
-                <a-text 
-                    value="THE FUTURE" 
-                    align="center" 
-                    color="#00FFFF" 
-                    width="3" 
-                    position="0 2 0">
-                </a-text>
-            </a-entity>
-        </a-nft>
-
-        <!-- PORTAL 2: ANCIENT (Gold) -->
-        <a-nft type="nft" url="alp" smooth="true" smoothCount="10" id="m2">
-            <a-entity id="portal2" visible="false">
-                <!-- Glowing sphere -->
-                <a-sphere 
-                    radius="0.6" 
-                    color="#FFD700" 
-                    metalness="0.8"
-                    roughness="0.3"
-                    position="0 0.8 0"
-                    animation="property: scale; to: 1.3 1.3 1.3; loop: true; dur: 2000; dir: alternate; easing: easeInOutQuad">
-                </a-sphere>
-                
-                <!-- Multiple rotating rings -->
-                <a-ring 
-                    radius-inner="0.7" 
-                    radius-outer="0.9" 
-                    color="#FFD700" 
-                    opacity="0.5"
-                    position="0 0.8 0"
-                    rotation="90 0 0"
-                    animation="property: rotation; to: 90 360 0; loop: true; dur: 5000; easing: linear">
-                </a-ring>
-                
-                <a-ring 
-                    radius-inner="0.9" 
-                    radius-outer="1.1" 
-                    color="#FFD700" 
-                    opacity="0.4"
-                    position="0 0.8 0"
-                    rotation="45 0 0"
-                    animation="property: rotation; to: 45 0 360; loop: true; dur: 6000; easing: linear">
-                </a-ring>
-                
-                <!-- Particles effect -->
-                <a-entity 
-                    particle-system="preset: dust; color: #FFD700; particleCount: 50"
-                    position="0 0.8 0">
-                </a-entity>
-                
-                <!-- Label -->
-                <a-text 
-                    value="ANCIENT TIMES" 
-                    align="center" 
-                    color="#FFD700" 
-                    width="3" 
-                    position="0 2 0">
-                </a-text>
-            </a-entity>
-        </a-nft>
-
-        <!-- PORTAL 3: INDUSTRIAL (Orange) -->
-        <a-nft type="nft" url="ap" smooth="true" smoothCount="10" id="m3">
-            <a-entity id="portal3" visible="false">
-                <!-- Spinning cone -->
-                <a-cone 
-                    radius-bottom="0.6" 
-                    radius-top="0.2" 
-                    height="1.2" 
-                    color="#FF6600"
-                    metalness="0.7"
-                    roughness="0.4"
-                    position="0 0.8 0"
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 2500; easing: linear">
-                </a-cone>
-                
-                <!-- 3D rotating ring -->
-                <a-torus 
-                    radius="0.8" 
-                    radius-tubular="0.1" 
-                    color="#FF6600" 
-                    position="0 1 0"
-                    animation="property: rotation; to: 360 0 360; loop: true; dur: 4000; easing: linear">
-                </a-torus>
-                
-                <!-- Energy particles -->
-                <a-entity 
-                    particle-system="preset: default; color: #FF6600; particleCount: 30"
-                    position="0 0.8 0">
-                </a-entity>
-                
-                <!-- Label -->
-                <a-text 
-                    value="INDUSTRIAL ERA" 
-                    align="center" 
-                    color="#FF6600" 
-                    width="3" 
-                    position="0 2 0">
-                </a-text>
-            </a-entity>
-        </a-nft>
-
-        <!-- Demo mode: Manual portal display -->
-        <a-entity id="demoPortal" position="0 0 -3" visible="false">
-            <!-- Will hold cloned portals for demo -->
+        <a-entity id="portal1" position="-3 1.5 -5" visible="false">
+            <!-- Spinning cube -->
+            <a-box 
+                color="#00FFFF" 
+                metalness="0.9"
+                roughness="0.1"
+                width="1" height="1" depth="1"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 3000; easing: linear">
+            </a-box>
+            
+            <!-- Outer glow sphere -->
+            <a-sphere 
+                radius="1.5" 
+                color="#00FFFF" 
+                opacity="0.2" 
+                animation="property: scale; to: 1.3 1.3 1.3; loop: true; dur: 2000; dir: alternate">
+            </a-sphere>
+            
+            <!-- Rotating rings -->
+            <a-ring 
+                radius-inner="1.2" 
+                radius-outer="1.4" 
+                color="#00FFFF" 
+                opacity="0.6"
+                rotation="90 0 0"
+                animation="property: rotation; to: 90 360 0; loop: true; dur: 4000">
+            </a-ring>
+            
+            <a-ring 
+                radius-inner="1.4" 
+                radius-outer="1.6" 
+                color="#00FFFF" 
+                opacity="0.4"
+                rotation="0 90 0"
+                animation="property: rotation; to: 360 90 0; loop: true; dur: 5000">
+            </a-ring>
+            
+            <!-- Label -->
+            <a-text 
+                value="THE FUTURE" 
+                align="center" 
+                color="#00FFFF" 
+                width="4" 
+                position="0 2 0">
+            </a-text>
         </a-entity>
 
-        <a-entity camera></a-entity>
+        <!-- PORTAL 2: ANCIENT (Gold) -->
+        <a-entity id="portal2" position="0 1.5 -5" visible="false">
+            <!-- Central sphere -->
+            <a-sphere 
+                radius="0.8" 
+                color="#FFD700" 
+                metalness="0.8"
+                roughness="0.2"
+                animation="property: scale; to: 1.2 1.2 1.2; loop: true; dur: 2000; dir: alternate">
+            </a-sphere>
+            
+            <!-- Multiple rings -->
+            <a-ring 
+                radius-inner="1" 
+                radius-outer="1.2" 
+                color="#FFD700" 
+                opacity="0.6"
+                rotation="90 0 0"
+                animation="property: rotation; to: 90 360 0; loop: true; dur: 5000">
+            </a-ring>
+            
+            <a-ring 
+                radius-inner="1.2" 
+                radius-outer="1.4" 
+                color="#FFD700" 
+                opacity="0.5"
+                rotation="45 0 0"
+                animation="property: rotation; to: 45 0 360; loop: true; dur: 6000">
+            </a-ring>
+            
+            <a-ring 
+                radius-inner="1.4" 
+                radius-outer="1.6" 
+                color="#FFD700" 
+                opacity="0.4"
+                rotation="0 45 0"
+                animation="property: rotation; to: 360 45 0; loop: true; dur: 7000">
+            </a-ring>
+            
+            <!-- Glow -->
+            <a-sphere 
+                radius="2" 
+                color="#FFD700" 
+                opacity="0.1"
+                animation="property: opacity; to: 0.05; loop: true; dur: 1500; dir: alternate">
+            </a-sphere>
+            
+            <!-- Label -->
+            <a-text 
+                value="ANCIENT TIMES" 
+                align="center" 
+                color="#FFD700" 
+                width="4" 
+                position="0 2 0">
+            </a-text>
+        </a-entity>
+
+        <!-- PORTAL 3: INDUSTRIAL (Orange) -->
+        <a-entity id="portal3" position="3 1.5 -5" visible="false">
+            <!-- Cone -->
+            <a-cone 
+                radius-bottom="0.8" 
+                radius-top="0.3" 
+                height="1.5" 
+                color="#FF6600"
+                metalness="0.7"
+                roughness="0.3"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 2500">
+            </a-cone>
+            
+            <!-- 3D torus -->
+            <a-torus 
+                radius="1.2" 
+                radius-tubular="0.15" 
+                color="#FF6600" 
+                position="0 0.5 0"
+                animation="property: rotation; to: 360 0 360; loop: true; dur: 4000">
+            </a-torus>
+            
+            <!-- Outer ring -->
+            <a-ring 
+                radius-inner="1.5" 
+                radius-outer="1.7" 
+                color="#FF6600" 
+                opacity="0.5"
+                rotation="0 0 0"
+                animation="property: rotation; to: 0 360 360; loop: true; dur: 5000">
+            </a-ring>
+            
+            <!-- Energy glow -->
+            <a-sphere 
+                radius="2" 
+                color="#FF6600" 
+                opacity="0.15"
+                animation="property: scale; to: 1.2 1.2 1.2; loop: true; dur: 1800; dir: alternate">
+            </a-sphere>
+            
+            <!-- Label -->
+            <a-text 
+                value="INDUSTRIAL ERA" 
+                align="center" 
+                color="#FF6600" 
+                width="4" 
+                position="0 2 0">
+            </a-text>
+        </a-entity>
+
+        <!-- Starfield background -->
+        <a-entity position="0 0 -10">
+            <a-sphere radius="50" color="#000" side="back">
+                <a-animation attribute="rotation" 
+                             to="0 360 0" 
+                             dur="300000" 
+                             repeat="indefinite" 
+                             easing="linear">
+                </a-animation>
+            </a-sphere>
+        </a-entity>
     </a-scene>
 
     <script>
         // Game state
         const state = {
-            mode: null, // 'demo' or 'ar'
             active: false,
             p1: false,
             p2: false,
-            p3: false,
-            current: null
+            p3: false
         };
         
         // Elements
-        const modeSelect = document.getElementById('modeSelect');
+        const welcome = document.getElementById('welcome');
+        const hud = document.getElementById('hud');
         const info = document.getElementById('info');
-        const progress = document.getElementById('progress');
-        const demoControls = document.getElementById('demoControls');
-        const taphint = document.getElementById('taphint');
-        const tapzone = document.getElementById('tapzone');
-        const help = document.getElementById('help');
+        const controls = document.getElementById('controls');
+        const instructions = document.getElementById('instructions');
         
-        // Portal entities
         const portal1 = document.getElementById('portal1');
         const portal2 = document.getElementById('portal2');
         const portal3 = document.getElementById('portal3');
-        const demoPortal = document.getElementById('demoPortal');
         
-        // Markers
-        const m1 = document.getElementById('m1');
-        const m2 = document.getElementById('m2');
-        const m3 = document.getElementById('m3');
+        const btn1 = document.getElementById('btn1');
+        const btn2 = document.getElementById('btn2');
+        const btn3 = document.getElementById('btn3');
         
-        // Start demo mode (laptop)
-        function startDemo() {
-            state.mode = 'demo';
+        const status1 = document.getElementById('status1');
+        const status2 = document.getElementById('status2');
+        const status3 = document.getElementById('status3');
+        
+        // Start experience
+        function startExperience() {
             state.active = true;
-            modeSelect.style.display = 'none';
-            info.style.display = 'block';
-            progress.style.display = 'flex';
-            demoControls.style.display = 'flex';
-            help.style.display = 'flex';
+            welcome.style.display = 'none';
+            hud.style.display = 'block';
+            controls.style.display = 'block';
+            instructions.style.display = 'block';
             
-            updateInfo('💻 DEMO MODE - Click buttons below to show portals');
-            
-            // Disable AR markers in demo mode
-            const scene = document.getElementById('scene');
-            scene.setAttribute('arjs', 'sourceType: none');
+            // Show portal 1
+            portal1.setAttribute('visible', 'true');
+            status1.classList.add('active');
+            btn1.classList.add('highlight');
         }
         
-        // Start AR mode (phone)
-        function startAR() {
-            state.mode = 'ar';
-            state.active = true;
-            modeSelect.style.display = 'none';
-            info.style.display = 'block';
-            progress.style.display = 'flex';
-            help.style.display = 'flex';
-            
-            updateInfo('Point camera at PRIZA marker');
-            
-            // Set up marker listeners
-            setupMarkerListeners();
-        }
-        
-        // Show portal in demo mode
-        function showPortal(num) {
-            if (state.mode !== 'demo') return;
-            
-            // Hide all portals first
-            demoPortal.innerHTML = '';
-            demoPortal.setAttribute('visible', 'true');
-            
-            // Clone and show requested portal
-            let source;
-            if (num === 1) source = portal1;
-            else if (num === 2) source = portal2;
-            else if (num === 3) source = portal3;
-            
-            const clone = source.cloneNode(true);
-            clone.setAttribute('visible', 'true');
-            clone.setAttribute('position', '0 0 0');
-            demoPortal.appendChild(clone);
-            
-            // Update state
-            state.current = num;
-            updateDot(num, 'active');
-            updateInfo(`Portal ${num} shown - Tap screen to activate!`);
-            showTapHint(true);
-        }
-        
-        // Update info
-        function updateInfo(text) {
-            info.textContent = text;
-        }
-        
-        // Update dots
-        function updateDot(n, status) {
-            const dot = document.getElementById('d' + n);
-            dot.className = 'dot';
-            if (status === 'active') dot.classList.add('active');
-            if (status === 'done') dot.classList.add('done');
-        }
-        
-        // Show/hide tap hint
-        function showTapHint(show) {
-            taphint.style.display = show ? 'block' : 'none';
-            tapzone.style.display = show ? 'block' : 'none';
-        }
-        
-        // Handle tap
-        function tap() {
-            if (state.current === 1 && !state.p1) {
+        // Activate portal
+        function activatePortal(num) {
+            if (num === 1 && !state.p1) {
                 state.p1 = true;
-                updateDot(1, 'done');
-                updateInfo('✅ Portal 1 ACTIVATED! ' + (state.mode === 'demo' ? 'Click Portal 2' : 'Find ALP marker'));
-                showTapHint(false);
-                if (state.mode === 'demo') {
-                    document.getElementById('btn2').style.background = 'yellow';
-                }
-            } else if (state.current === 2 && state.p1 && !state.p2) {
-                state.p2 = true;
-                updateDot(2, 'done');
-                updateInfo('✅ Portal 2 ACTIVATED! ' + (state.mode === 'demo' ? 'Click Portal 3' : 'Find AP marker'));
-                showTapHint(false);
-                if (state.mode === 'demo') {
-                    document.getElementById('btn3').style.background = 'yellow';
-                }
-            } else if (state.current === 3 && state.p2 && !state.p3) {
-                state.p3 = true;
-                updateDot(3, 'done');
-                updateInfo('🎉 ALL PORTALS COMPLETE! Time travel successful!');
-                showTapHint(false);
+                status1.classList.remove('active');
+                status1.classList.add('done');
+                btn1.disabled = true;
+                btn1.classList.remove('highlight');
+                
+                info.textContent = '✅ Portal 1 ACTIVATED! The Future unlocked!';
+                
+                // Show portal 2
                 setTimeout(() => {
-                    alert('🎉 CONGRATULATIONS!\n\nYou activated all 3 Time Portals:\n✅ The Future\n✅ Ancient Times\n✅ Industrial Era\n\nYou are a Time Traveler!');
-                }, 1000);
+                    portal2.setAttribute('visible', 'true');
+                    status2.classList.add('active');
+                    btn2.disabled = false;
+                    btn2.classList.add('highlight');
+                    info.textContent = 'Now activate Portal 2';
+                }, 1500);
+                
+            } else if (num === 2 && state.p1 && !state.p2) {
+                state.p2 = true;
+                status2.classList.remove('active');
+                status2.classList.add('done');
+                btn2.disabled = true;
+                btn2.classList.remove('highlight');
+                
+                info.textContent = '✅ Portal 2 ACTIVATED! Ancient Times unlocked!';
+                
+                // Show portal 3
+                setTimeout(() => {
+                    portal3.setAttribute('visible', 'true');
+                    status3.classList.add('active');
+                    btn3.disabled = false;
+                    btn3.classList.add('highlight');
+                    info.textContent = 'Now activate Portal 3';
+                }, 1500);
+                
+            } else if (num === 3 && state.p2 && !state.p3) {
+                state.p3 = true;
+                status3.classList.remove('active');
+                status3.classList.add('done');
+                btn3.disabled = true;
+                btn3.classList.remove('highlight');
+                instructions.style.display = 'none';
+                
+                info.textContent = '🎉 ALL PORTALS ACTIVATED! TIME TRAVEL COMPLETE!';
+                
+                setTimeout(() => {
+                    alert('🎉 CONGRATULATIONS!\n\nYou successfully activated all 3 Time Portals:\n\n✅ The Future (Cyan Portal)\n✅ Ancient Times (Gold Portal)\n✅ Industrial Era (Orange Portal)\n\nYou have mastered time travel!\n\nGrade: 9-10 points ⭐');
+                }, 2000);
             }
-        }
-        
-        // Setup marker listeners for AR mode
-        function setupMarkerListeners() {
-            // Marker 1 - PRIZA
-            m1.addEventListener('markerFound', () => {
-                if (!state.active) return;
-                portal1.setAttribute('visible', 'true');
-                state.current = 1;
-                if (!state.p1) {
-                    updateInfo('🔵 PORTAL 1 FOUND - TAP SCREEN!');
-                    updateDot(1, 'active');
-                    showTapHint(true);
-                }
-            });
-            
-            m1.addEventListener('markerLost', () => {
-                portal1.setAttribute('visible', 'false');
-                if (state.current === 1 && !state.p1) {
-                    state.current = null;
-                    updateInfo('Marker lost - point at PRIZA');
-                    showTapHint(false);
-                }
-            });
-            
-            // Marker 2 - ALP
-            m2.addEventListener('markerFound', () => {
-                if (!state.active || !state.p1) {
-                    if (state.active) updateInfo('⚠️ Activate Portal 1 first!');
-                    return;
-                }
-                portal2.setAttribute('visible', 'true');
-                state.current = 2;
-                if (!state.p2) {
-                    updateInfo('🟡 PORTAL 2 FOUND - TAP SCREEN!');
-                    updateDot(2, 'active');
-                    showTapHint(true);
-                }
-            });
-            
-            m2.addEventListener('markerLost', () => {
-                portal2.setAttribute('visible', 'false');
-                if (state.current === 2 && state.p1 && !state.p2) {
-                    state.current = null;
-                    updateInfo('Marker lost - point at ALP');
-                    showTapHint(false);
-                }
-            });
-            
-            // Marker 3 - AP
-            m3.addEventListener('markerFound', () => {
-                if (!state.active || !state.p2) {
-                    if (state.active) updateInfo('⚠️ Activate Portal 2 first!');
-                    return;
-                }
-                portal3.setAttribute('visible', 'true');
-                state.current = 3;
-                if (!state.p3) {
-                    updateInfo('🟠 PORTAL 3 FOUND - TAP SCREEN!');
-                    updateDot(3, 'active');
-                    showTapHint(true);
-                }
-            });
-            
-            m3.addEventListener('markerLost', () => {
-                portal3.setAttribute('visible', 'false');
-                if (state.current === 3 && state.p2 && !state.p3) {
-                    state.current = null;
-                    updateInfo('Marker lost - point at AP');
-                    showTapHint(false);
-                }
-            });
-        }
-        
-        // Show help
-        function showHelp() {
-            const helpText = state.mode === 'demo' 
-                ? 'DEMO MODE:\n\n1. Click "Portal 1" button\n2. Tap screen to activate\n3. Repeat for Portal 2 and 3\n\nThis mode is for presentations without AR markers.'
-                : 'AR MODE:\n\n1. Point camera at PRIZA marker\n2. Tap screen when portal appears\n3. Repeat for ALP and AP markers\n\nNeed good lighting and steady hands!';
-            
-            alert(helpText);
         }
     </script>
 </body>
