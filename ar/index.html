@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AR Time Guardian - 3 Markers</title>
+    <title>AR Time Guardian</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
@@ -35,13 +35,6 @@
         
         #startScreen h1 { font-size: 40px; margin-bottom: 20px; }
         #startScreen p { font-size: 16px; margin: 10px 0; line-height: 1.6; }
-        
-        .marker-list {
-            background: rgba(255,255,255,0.2);
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-        }
         
         .warning {
             background: rgba(255,0,0,0.3);
@@ -114,6 +107,28 @@
             50% { transform: scale(1.15); }
         }
         
+        #tapHint {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            color: black;
+            padding: 20px 40px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 22px;
+            display: none;
+            z-index: 5;
+            animation: bounce 0.7s infinite;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+        }
+        
         #choiceButtons {
             position: absolute;
             bottom: 120px;
@@ -178,19 +193,6 @@
         
         .end-content p { font-size: 1.3em; margin: 20px 0; line-height: 1.6; }
         
-        .journey {
-            background: rgba(255,255,255,0.1);
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-            text-align: left;
-        }
-        
-        .journey-step {
-            margin: 10px 0;
-            font-size: 1.1em;
-        }
-        
         #replayBtn {
             background: #667eea;
             color: white;
@@ -210,32 +212,31 @@
         <div style="max-width: 600px;">
             <h1>⏳ TIME GUARDIAN ⏳</h1>
             <p style="font-size: 20px;"><strong>Mission: Restore the Timeline</strong></p>
-            
-            <div class="marker-list">
-                <strong>SCAN IN ORDER:</strong><br><br>
-                1️⃣ <strong>HIRO</strong> → Ancient Portal<br>
-                2️⃣ <strong>KANJI</strong> (人) → Industrial Portal<br>
-                3️⃣ <strong>CUSTOM</strong> → Future Portal
-            </div>
-            
+            <p style="font-size: 16px;">
+                Scan the <b>HIRO marker</b> and activate portals by tapping:<br><br>
+                <strong>Portal 1:</strong> Ancient → TAP SCREEN<br>
+                <strong>Portal 2:</strong> Industrial → TAP SCREEN<br>
+                <strong>Portal 3:</strong> Future → CHOOSE YOUR ENDING
+            </p>
             <div class="warning">
                 <strong>⚠️ TWO ENDINGS!</strong><br>
                 At Portal 3, choose:<br>
-                ✅ <strong>GREEN</strong> = Timeline Saved (Good Ending)<br>
-                ❌ <strong>RED</strong> = Time Paradox (Bad Ending)
+                ✅ <strong>GREEN</strong> = Good Ending (Timeline Saved)<br>
+                ❌ <strong>RED</strong> = Bad Ending (Paradox)
             </div>
-            
             <button onclick="start()">START MISSION</button>
         </div>
     </div>
 
-    <div id="statusBox">Scan <b>HIRO</b> marker first</div>
+    <div id="statusBox">Point at HIRO marker</div>
     
     <div id="progress">
         <div class="dot" id="d1">1</div>
         <div class="dot" id="d2">2</div>
         <div class="dot" id="d3">3</div>
     </div>
+    
+    <div id="tapHint">👆 TAP SCREEN!</div>
     
     <div id="choiceButtons">
         <button id="goodBtn" class="choice-btn" onclick="choose('good')">✅ SAVE<br>TIMELINE</button>
@@ -247,7 +248,6 @@
         <div id="endContent" class="end-content">
             <h1 id="endTitle"></h1>
             <p id="endMessage"></p>
-            <div id="journeyLog" class="journey"></div>
             <button id="replayBtn" onclick="location.reload()">REPLAY MISSION</button>
         </div>
     </div>
@@ -262,9 +262,11 @@
         <a-entity light="type: ambient; intensity: 0.9"></a-entity>
         <a-entity light="type: directional; intensity: 0.8" position="0 1 1"></a-entity>
 
-        <!-- HIRO marker -> Portal 1: Ancient (FIRST) -->
+        <!-- HIRO marker with all 3 portals -->
         <a-marker id="marker-hiro" preset="hiro" emitevents="true">
-            <a-entity id="portal-hiro" visible="false">
+            
+            <!-- Portal 1: Ancient (shown first) -->
+            <a-entity id="portal1" visible="true">
                 <a-box 
                     color="#FFD700" 
                     scale="1 1 1"
@@ -289,18 +291,16 @@
                 </a-cylinder>
                 
                 <a-text 
-                    value="ANCIENT" 
+                    value="ANCIENT\nPORTAL 1" 
                     align="center" 
                     color="#FFD700" 
                     width="4" 
                     position="0 2.2 0">
                 </a-text>
             </a-entity>
-        </a-marker>
-
-        <!-- KANJI marker -> Portal 2: Industrial (SECOND) -->
-        <a-marker id="marker-kanji" preset="kanji" emitevents="true">
-            <a-entity id="portal-kanji" visible="false">
+            
+            <!-- Portal 2: Industrial (shown after portal 1) -->
+            <a-entity id="portal2" visible="false">
                 <a-box 
                     color="#606060" 
                     scale="0.9 0.9 0.9"
@@ -326,18 +326,16 @@
                 </a-ring>
                 
                 <a-text 
-                    value="INDUSTRIAL" 
+                    value="INDUSTRIAL\nPORTAL 2" 
                     align="center" 
                     color="#C0C0C0" 
                     width="4" 
                     position="0 2.2 0">
                 </a-text>
             </a-entity>
-        </a-marker>
-
-        <!-- CUSTOM marker -> Portal 3: Future (THIRD - with choice) -->
-        <a-marker id="marker-custom" type="pattern" url="pattern-custom.patt" emitevents="true">
-            <a-entity id="portal-custom" visible="false">
+            
+            <!-- Portal 3: Future (shown after portal 2) -->
+            <a-entity id="portal3" visible="false">
                 <a-sphere 
                     color="#00FFFF" 
                     opacity="0.9" 
@@ -365,37 +363,34 @@
                 </a-ring>
                 
                 <a-text 
-                    value="FUTURE" 
+                    value="FUTURE\nPORTAL 3" 
                     align="center" 
                     color="#00FFFF" 
                     width="4" 
                     position="0 2.2 0">
                 </a-text>
             </a-entity>
+            
         </a-marker>
 
         <a-entity camera></a-entity>
     </a-scene>
 
     <script>
-        console.log('🚀 AR Time Guardian - 3 Pattern Markers Version');
+        console.log('🚀 AR Time Guardian - HIRO Only Version');
         
         const statusBox = document.getElementById('statusBox');
-        
         const markerHiro = document.getElementById('marker-hiro');
-        const markerKanji = document.getElementById('marker-kanji');
-        const markerCustom = document.getElementById('marker-custom');
         
-        const portalHiro = document.getElementById('portal-hiro');
-        const portalKanji = document.getElementById('portal-kanji');
-        const portalCustom = document.getElementById('portal-custom');
+        const portal1 = document.getElementById('portal1');
+        const portal2 = document.getElementById('portal2');
+        const portal3 = document.getElementById('portal3');
         
-        let hiroScanned = false;
-        let kanjiScanned = false;
-        let customScanned = false;
+        let p1Done = false;
+        let p2Done = false;
+        let p3Done = false;
+        let markerVisible = false;
         let gameEnded = false;
-        
-        const sequence = [];
         
         function start() {
             document.getElementById('startScreen').style.display = 'none';
@@ -404,130 +399,110 @@
             document.getElementById('d1').classList.add('active');
         }
         
-        function updateDot(n, state) {
-            const dot = document.getElementById('d' + n);
-            dot.className = 'dot';
-            if (state === 'active') dot.classList.add('active');
-            if (state === 'done') dot.classList.add('done');
+        function updateUI() {
+            if (!p1Done) {
+                portal1.setAttribute('visible', 'true');
+                portal2.setAttribute('visible', 'false');
+                portal3.setAttribute('visible', 'false');
+                statusBox.innerHTML = 'Portal 1: <b>ANCIENT</b> - Scan HIRO & TAP!';
+                if (markerVisible) {
+                    document.getElementById('tapHint').style.display = 'block';
+                    document.getElementById('choiceButtons').style.display = 'none';
+                }
+            } else if (!p2Done) {
+                portal1.setAttribute('visible', 'false');
+                portal2.setAttribute('visible', 'true');
+                portal3.setAttribute('visible', 'false');
+                statusBox.innerHTML = 'Portal 2: <b>INDUSTRIAL</b> - Scan HIRO & TAP!';
+                if (markerVisible) {
+                    document.getElementById('tapHint').style.display = 'block';
+                    document.getElementById('choiceButtons').style.display = 'none';
+                }
+            } else if (!p3Done) {
+                portal1.setAttribute('visible', 'false');
+                portal2.setAttribute('visible', 'false');
+                portal3.setAttribute('visible', 'true');
+                statusBox.innerHTML = 'Portal 3: <b>FUTURE</b> - CHOOSE YOUR ENDING!';
+                if (markerVisible) {
+                    document.getElementById('tapHint').style.display = 'none';
+                    document.getElementById('choiceButtons').style.display = 'flex';
+                }
+            }
         }
         
-        function showEnd(type) {
-            if (gameEnded) return;
+        function choose(type) {
+            if (!markerVisible || gameEnded) return;
+            
+            p3Done = true;
             gameEnded = true;
+            document.getElementById('d3').classList.remove('active');
+            document.getElementById('d3').classList.add('done');
+            document.getElementById('choiceButtons').style.display = 'none';
             
             const ec = document.getElementById('endContent');
-            const journeyLog = document.getElementById('journeyLog');
-            
-            let journeyHTML = '<h3>Your Journey:</h3>';
-            const portalNames = {
-                'hiro': '✅ HIRO → Ancient Portal',
-                'kanji': '✅ KANJI → Industrial Portal',
-                'custom': '✅ CUSTOM → Future Portal'
-            };
-            
-            sequence.forEach(step => {
-                journeyHTML += `<div class="journey-step">${portalNames[step]}</div>`;
-            });
             
             if (type === 'good') {
                 ec.className = 'end-content good';
                 document.getElementById('endTitle').textContent = '🌟 TIMELINE SAVED! 🌟';
-                document.getElementById('endMessage').textContent = 'You successfully traveled through all 3 time portals in the correct order and restored the timeline! The universe is safe!';
-                journeyHTML += '<p style="margin-top: 20px; color: #4CAF50; font-weight: bold;">Mission Success! Grade: 10/10 🏆</p>';
+                document.getElementById('endMessage').textContent = 'You successfully traveled through all 3 time portals and restored the timeline! The universe is safe!';
             } else {
                 ec.className = 'end-content bad';
                 document.getElementById('endTitle').textContent = '💥 TIME PARADOX! 💥';
-                document.getElementById('endMessage').textContent = 'You created a time paradox by choosing the wrong path! The timeline is destroyed and reality collapses into chaos!';
-                journeyHTML += '<p style="margin-top: 20px; color: #f44336;">Timeline Corrupted!</p>';
+                document.getElementById('endMessage').textContent = 'You created a time paradox! The timeline is destroyed and reality collapses!';
             }
-            
-            journeyLog.innerHTML = journeyHTML;
             
             setTimeout(() => {
                 document.getElementById('endScreen').classList.add('show');
             }, 1000);
         }
         
-        function choose(type) {
-            if (gameEnded) return;
-            document.getElementById('choiceButtons').style.display = 'none';
-            showEnd(type);
-        }
-        
-        // ---------- HIRO marker (first) ----------
-        markerHiro.addEventListener('markerFound', () => {
-            console.log('✅ HIRO detected!');
+        // Tap to activate portals 1 and 2
+        document.addEventListener('click', (e) => {
+            // Ignore if clicking choice buttons
+            if (e.target.id === 'goodBtn' || e.target.id === 'badBtn') return;
             
-            if (!hiroScanned) {
-                portalHiro.setAttribute('visible', 'true');
-                hiroScanned = true;
-                sequence.push('hiro');
-                updateDot(1, 'done');
-                updateDot(2, 'active');
-                statusBox.innerHTML = '✅ Ancient Portal! Now scan <b>KANJI</b> marker (人)';
-            } else {
-                portalHiro.setAttribute('visible', 'true');
+            if (!markerVisible || gameEnded) return;
+            
+            if (!p1Done) {
+                p1Done = true;
+                document.getElementById('d1').classList.remove('active');
+                document.getElementById('d1').classList.add('done');
+                document.getElementById('d2').classList.add('active');
+                document.getElementById('tapHint').style.display = 'none';
+                statusBox.innerHTML = '✅ Portal 1 activated! Point at HIRO again';
+                console.log('✅ Portal 1 (Ancient) activated!');
             }
+            else if (!p2Done) {
+                p2Done = true;
+                document.getElementById('d2').classList.remove('active');
+                document.getElementById('d2').classList.add('done');
+                document.getElementById('d3').classList.add('active');
+                document.getElementById('tapHint').style.display = 'none';
+                statusBox.innerHTML = '✅ Portal 2 activated! Point at HIRO again';
+                console.log('✅ Portal 2 (Industrial) activated!');
+            }
+        });
+        
+        // HIRO marker events
+        markerHiro.addEventListener('markerFound', () => {
+            console.log('✅ HIRO marker found!');
+            markerVisible = true;
+            updateUI();
         });
         
         markerHiro.addEventListener('markerLost', () => {
-            portalHiro.setAttribute('visible', 'false');
-        });
-        
-        // ---------- KANJI marker (second) ----------
-        markerKanji.addEventListener('markerFound', () => {
-            console.log('✅ KANJI detected!');
+            console.log('Marker lost');
+            markerVisible = false;
+            document.getElementById('tapHint').style.display = 'none';
+            document.getElementById('choiceButtons').style.display = 'none';
             
-            if (!hiroScanned) {
-                portalKanji.setAttribute('visible', 'false');
-                statusBox.innerHTML = '⚠️ Scan <b>HIRO</b> marker first!';
-                return;
+            if (!p1Done) {
+                statusBox.innerHTML = 'Point at HIRO marker';
+            } else if (!p2Done) {
+                statusBox.innerHTML = 'Point at HIRO marker again';
+            } else if (!p3Done) {
+                statusBox.innerHTML = 'Point at HIRO marker again';
             }
-            
-            portalKanji.setAttribute('visible', 'true');
-            
-            if (!kanjiScanned) {
-                kanjiScanned = true;
-                sequence.push('kanji');
-                updateDot(2, 'done');
-                updateDot(3, 'active');
-                statusBox.innerHTML = '✅ Industrial Portal! Now scan <b>CUSTOM</b> marker';
-            }
-        });
-        
-        markerKanji.addEventListener('markerLost', () => {
-            portalKanji.setAttribute('visible', 'false');
-        });
-        
-        // ---------- CUSTOM marker (third - with choice) ----------
-        markerCustom.addEventListener('markerFound', () => {
-            console.log('✅ CUSTOM marker detected!');
-            
-            if (!hiroScanned) {
-                portalCustom.setAttribute('visible', 'false');
-                statusBox.innerHTML = '⚠️ Scan <b>HIRO</b> marker first!';
-                return;
-            }
-            
-            if (!kanjiScanned) {
-                portalCustom.setAttribute('visible', 'false');
-                statusBox.innerHTML = '⚠️ After HIRO, scan <b>KANJI</b> marker, then CUSTOM';
-                return;
-            }
-            
-            portalCustom.setAttribute('visible', 'true');
-            
-            if (!customScanned && !gameEnded) {
-                customScanned = true;
-                sequence.push('custom');
-                updateDot(3, 'done');
-                statusBox.innerHTML = '🎉 Future Portal! <b>CHOOSE YOUR DESTINY!</b>';
-                document.getElementById('choiceButtons').style.display = 'flex';
-            }
-        });
-        
-        markerCustom.addEventListener('markerLost', () => {
-            portalCustom.setAttribute('visible', 'false');
         });
     </script>
 </body>
