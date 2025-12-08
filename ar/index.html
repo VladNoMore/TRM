@@ -2,29 +2,115 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Time Portals AR - HIRO Only</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AR Time Guardian - NFT Kanji Version</title>
     
     <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
     
     <style>
         * { -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        #startScreen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .start-content {
+            max-width: 500px;
+            animation: fadeIn 1s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin: 0 0 20px 0;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        .instructions {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 20px;
+            margin: 20px 0;
+            text-align: left;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .instructions h2 {
+            margin: 0 0 15px 0;
+            font-size: 1.3em;
+            color: #ffeb3b;
+        }
+        
+        .step {
+            margin: 12px 0;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .warning {
+            background: rgba(255,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 2px solid rgba(255,0,0,0.5);
+        }
+        
+        #startBtn {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+            color: #1a1a2e;
+            border: none;
+            padding: 18px 50px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 25px;
+            box-shadow: 0 8px 20px rgba(0,255,136,0.4);
+            transition: all 0.3s ease;
+        }
+        
+        #startBtn:active {
+            transform: scale(0.95);
+            box-shadow: 0 4px 10px rgba(0,255,136,0.3);
+        }
         
         #info {
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
             color: white;
             padding: 15px 25px;
-            border-radius: 10px;
+            border-radius: 15px;
             text-align: center;
+            max-width: 85%;
             z-index: 100;
             font-size: 16px;
-            max-width: 85%;
+            font-weight: 600;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.1);
         }
         
         #progress {
@@ -33,404 +119,374 @@
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 15px;
+            gap: 20px;
             z-index: 100;
         }
         
-        .dot {
-            width: 30px;
-            height: 30px;
+        .portal-dot {
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            border: 3px solid white;
+            background: rgba(255,255,255,0.2);
+            border: 4px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
         
-        .dot.active { 
-            background: yellow; 
-            box-shadow: 0 0 20px yellow;
+        .portal-dot.unlocked {
+            background: #4CAF50;
+            box-shadow: 0 0 20px #4CAF50;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .portal-dot.current {
+            background: #FFC107;
+            box-shadow: 0 0 25px #FFC107;
             animation: pulse 1s infinite;
         }
-        .dot.done { background: lime; }
         
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.15); }
         }
         
-        #start {
+        #endScreen {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        #endScreen.show { display: flex; }
+        
+        .end-content {
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(15px);
+            padding: 40px;
+            border-radius: 25px;
+            text-align: center;
+            max-width: 500px;
+            color: white;
+            animation: slideIn 0.5s ease;
+            border: 3px solid;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(50px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .end-content.good { border-color: #4CAF50; }
+        .end-content.bad { border-color: #f44336; }
+        
+        .end-content h1 { font-size: 2.5em; margin: 0 0 20px 0; }
+        .end-content.good h1 { color: #4CAF50; text-shadow: 0 0 20px #4CAF50; }
+        .end-content.bad h1 { color: #f44336; text-shadow: 0 0 20px #f44336; }
+        
+        .end-content p { font-size: 1.2em; line-height: 1.6; margin: 15px 0; }
+        
+        .journey {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .journey-step {
+            margin: 10px 0;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #replayBtn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 40px;
-            border-radius: 15px;
-            text-align: center;
-            z-index: 200;
-            max-width: 85%;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
-        }
-        
-        #start h1 { 
-            font-size: 32px; 
-            margin-bottom: 15px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
-        #start p { margin: 10px 0; font-size: 15px; line-height: 1.6; }
-        #start button {
-            margin-top: 30px;
-            padding: 18px 50px;
-            font-size: 20px;
-            background: white;
-            color: #667eea;
             border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            font-weight: bold;
             border-radius: 50px;
-            font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            margin-top: 20px;
+            box-shadow: 0 8px 20px rgba(102,126,234,0.4);
         }
         
-        #markers-info {
-            margin-top: 25px;
-            padding: 20px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-        
-        #markers-info a {
-            color: #FFD700;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        
-        #taphint {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            color: black;
-            padding: 15px 35px;
-            border-radius: 25px;
-            font-weight: bold;
-            font-size: 18px;
-            display: none;
-            z-index: 100;
-            animation: bounce 0.7s infinite;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(-8px); }
-        }
+        #replayBtn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
-    <div id="start">
-        <h1>🌟 Time Portals 🌟</h1>
-        <p style="font-size: 18px;"><strong>Sequential AR Experience</strong></p>
-        <p style="font-size: 14px; color: rgba(255,255,255,0.9); margin-top: 15px;">
-            Scan the <strong>HIRO marker</strong> three times<br>
-            Each scan reveals a different time portal!
-        </p>
-        <p style="font-size: 13px; margin-top: 15px;">
-            <span style="color: #00FFFF;">Portal 1: Future</span> →
-            <span style="color: #FFD700;">Portal 2: Ancient</span> →
-            <span style="color: #FF6600;">Portal 3: Industrial</span>
-        </p>
-        <div id="markers-info">
-            📥 <strong>Download HIRO marker:</strong><br>
-            <a href="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png" target="_blank">
-                Click here for HIRO marker
-            </a><br>
-            <small style="color: rgba(255,255,255,0.7);">
-                Print it or show on another screen<br>
-                Size: 10cm x 10cm minimum
-            </small>
+    <!-- Start Screen -->
+    <div id="startScreen">
+        <div class="start-content">
+            <h1>⏳ TIME GUARDIAN ⏳</h1>
+            <div class="instructions">
+                <h2>✅ CORRECT PATH:</h2>
+                <div class="step">1️⃣ <strong>HIRO</strong> marker → Ancient Portal</div>
+                <div class="step">2️⃣ <strong>KANJI</strong> marker (人) → Industrial Portal</div>
+                <div class="step">3️⃣ <strong>Barcode 1</strong> (■ with black square) → Future Portal</div>
+                
+                <div class="warning">
+                    <strong>⚠️ WARNING!</strong><br>
+                    Scanning <strong>Barcode 0</strong> (□ no black square)<br>
+                    = INSTANT TIME PARADOX!
+                </div>
+            </div>
+            <button id="startBtn">START MISSION</button>
         </div>
-        <button onclick="start()">START AR</button>
     </div>
 
-    <div id="info" style="display:none;">Point at HIRO marker</div>
+    <!-- Info Bar -->
+    <div id="info" style="display:none;">
+        <div id="infoText">Point camera at HIRO marker</div>
+    </div>
     
+    <!-- Progress Dots -->
     <div id="progress" style="display:none;">
-        <div class="dot" id="d1"></div>
-        <div class="dot" id="d2"></div>
-        <div class="dot" id="d3"></div>
+        <div class="portal-dot" id="dot1">1</div>
+        <div class="portal-dot" id="dot2">2</div>
+        <div class="portal-dot" id="dot3">3</div>
     </div>
-    
-    <div id="taphint">👆 TAP SCREEN!</div>
 
+    <!-- End Screen -->
+    <div id="endScreen">
+        <div id="endContent" class="end-content">
+            <h1 id="endTitle">Title</h1>
+            <p id="endMessage">Message</p>
+            <div id="journeyLog" class="journey"></div>
+            <button id="replayBtn">REPLAY MISSION</button>
+        </div>
+    </div>
+
+    <!-- AR Scene -->
     <a-scene
         vr-mode-ui="enabled: false"
-        renderer="logarithmicDepthBuffer: true; precision: mediump; alpha: true"
+        renderer="antialias: true; alpha: true; precision: medium;"
         embedded
-        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
         
-        <!-- Single HIRO marker that shows different portals based on state -->
-        <a-marker preset="hiro" id="hiro" emitevents="true" smooth="true" smoothCount="10">
-            
-            <!-- PORTAL 1: Future (shown first) -->
-            <a-entity id="portal1" visible="true">
-                <a-box 
-                    color="#00FFFF" 
-                    metalness="0.9"
-                    roughness="0.1"
-                    width="1" height="1" depth="1"
-                    position="0 0.5 0"
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 3000; easing: linear">
-                </a-box>
-                
-                <a-sphere 
-                    radius="1.4" 
-                    color="#00FFFF" 
-                    opacity="0.2" 
-                    position="0 0.5 0"
-                    animation="property: scale; to: 1.3 1.3 1.3; loop: true; dur: 2000; dir: alternate">
-                </a-sphere>
-                
-                <a-ring 
-                    radius-inner="1.5" 
-                    radius-outer="1.7" 
-                    color="#00FFFF" 
-                    opacity="0.6"
-                    position="0 0.5 0"
-                    rotation="90 0 0"
-                    animation="property: rotation; to: 90 360 0; loop: true; dur: 4000">
-                </a-ring>
-                
-                <a-text 
-                    value="FUTURE\nPORTAL 1" 
-                    align="center" 
-                    color="#00FFFF" 
-                    width="4" 
-                    position="0 2.2 0">
-                </a-text>
-            </a-entity>
-            
-            <!-- PORTAL 2: Ancient (shown after Portal 1 activated) -->
-            <a-entity id="portal2" visible="false">
-                <a-sphere 
-                    radius="0.9" 
-                    color="#FFD700" 
-                    metalness="0.8"
-                    roughness="0.2"
-                    position="0 0.5 0"
-                    animation="property: scale; to: 1.25 1.25 1.25; loop: true; dur: 2000; dir: alternate">
-                </a-sphere>
-                
-                <a-ring 
-                    radius-inner="1.1" 
-                    radius-outer="1.3" 
-                    color="#FFD700" 
-                    opacity="0.6"
-                    position="0 0.5 0"
-                    rotation="90 0 0"
-                    animation="property: rotation; to: 90 360 0; loop: true; dur: 5000">
-                </a-ring>
-                
-                <a-ring 
-                    radius-inner="1.4" 
-                    radius-outer="1.6" 
-                    color="#FFD700" 
-                    opacity="0.5"
-                    position="0 0.5 0"
-                    rotation="45 0 0"
-                    animation="property: rotation; to: 45 0 360; loop: true; dur: 6000">
-                </a-ring>
-                
-                <a-sphere 
-                    radius="1.8" 
-                    color="#FFD700" 
-                    opacity="0.1"
-                    position="0 0.5 0"
-                    animation="property: opacity; to: 0.05; loop: true; dur: 1500; dir: alternate">
-                </a-sphere>
-                
-                <a-text 
-                    value="ANCIENT\nPORTAL 2" 
-                    align="center" 
-                    color="#FFD700" 
-                    width="4" 
-                    position="0 2.2 0">
-                </a-text>
-            </a-entity>
-            
-            <!-- PORTAL 3: Industrial (shown after Portal 2 activated) -->
-            <a-entity id="portal3" visible="false">
-                <a-cone 
-                    radius-bottom="0.9" 
-                    radius-top="0.3" 
-                    height="1.6" 
-                    color="#FF6600"
-                    metalness="0.7"
-                    roughness="0.3"
-                    position="0 0.8 0"
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 2500">
-                </a-cone>
-                
-                <a-torus 
-                    radius="1.3" 
-                    radius-tubular="0.15" 
-                    color="#FF6600" 
-                    position="0 1 0"
-                    animation="property: rotation; to: 360 0 360; loop: true; dur: 4000">
-                </a-torus>
-                
-                <a-ring 
-                    radius-inner="1.5" 
-                    radius-outer="1.7" 
-                    color="#FF6600" 
-                    opacity="0.5"
-                    position="0 0.5 0"
-                    rotation="0 0 0"
-                    animation="property: rotation; to: 0 360 360; loop: true; dur: 5000">
-                </a-ring>
-                
-                <a-sphere 
-                    radius="1.8" 
-                    color="#FF6600" 
-                    opacity="0.15"
-                    position="0 0.8 0"
-                    animation="property: scale; to: 1.2 1.2 1.2; loop: true; dur: 1800; dir: alternate">
-                </a-sphere>
-                
-                <a-text 
-                    value="INDUSTRIAL\nPORTAL 3" 
-                    align="center" 
-                    color="#FF6600" 
-                    width="4" 
-                    position="0 2.4 0">
-                </a-text>
-            </a-entity>
-            
+        <!-- Marker 1: HIRO (Ancient Portal) -->
+        <a-marker preset="hiro" id="m1" emitevents="true" smooth="true" smoothCount="5">
+            <!-- Ancient Portal: Brown/Bronze Theme -->
+            <a-torus color="#8B4513" radius="0.8" radius-tubular="0.08" position="0 0.5 0"
+                     animation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear">
+            </a-torus>
+            <a-cylinder color="#CD853F" opacity="0.6" radius="0.5" height="2" position="0 0.5 0"
+                        material="transparent: true; opacity: 0.4">
+            </a-cylinder>
+            <a-text value="ANCIENT\nPORTAL" align="center" color="#FFD700" width="3" position="0 1.8 0"></a-text>
+        </a-marker>
+
+        <!-- Marker 2: KANJI NFT (Industrial Portal) -->
+        <a-nft type="nft" url="kanji" id="m2" emitevents="true" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="5">
+            <!-- Industrial Portal: Gray/Metallic Theme -->
+            <a-box color="#606060" scale="0.6 0.6 0.6" position="0 0.5 0"
+                   animation="property: rotation; to: 0 360 0; loop: true; dur: 6000; easing: linear">
+            </a-box>
+            <a-torus color="#A9A9A9" radius="0.7" radius-tubular="0.05" position="0 0.5 0"
+                     animation="property: rotation; to: 360 0 0; loop: true; dur: 4000; easing: linear">
+            </a-torus>
+            <a-torus color="#808080" radius="0.5" radius-tubular="0.04" position="0 0.5 0"
+                     animation="property: rotation; to: 0 360 360; loop: true; dur: 5000; easing: linear">
+            </a-torus>
+            <a-text value="INDUSTRIAL\nPORTAL" align="center" color="#C0C0C0" width="3" position="0 1.8 0"></a-text>
+        </a-nft>
+
+        <!-- Marker 3: Barcode 1 (Future Portal - WIN) -->
+        <a-marker type="barcode" value="1" id="m3" emitevents="true" smooth="true" smoothCount="5">
+            <!-- Future Portal: Cyan/Energy Theme -->
+            <a-sphere color="#00FFFF" opacity="0.7" radius="0.5" position="0 0.5 0"
+                      animation="property: scale; to: 1.3 1.3 1.3; loop: true; dur: 2000; dir: alternate; easing: easeInOutQuad">
+            </a-sphere>
+            <a-ring color="#00CED1" radius-inner="0.6" radius-outer="0.8" position="0 0.5 0" rotation="90 0 0"
+                    animation="property: rotation; to: 90 360 0; loop: true; dur: 3000; easing: linear">
+            </a-ring>
+            <a-ring color="#40E0D0" radius-inner="0.4" radius-outer="0.6" position="0 0.5 0" rotation="-90 0 0"
+                    animation="property: rotation; to: -90 -360 0; loop: true; dur: 4000; easing: linear">
+            </a-ring>
+            <a-text value="FUTURE\nPORTAL" align="center" color="#00FFFF" width="3" position="0 1.8 0"></a-text>
+        </a-marker>
+
+        <!-- Marker 4: Barcode 0 (Paradox Portal - FAIL) -->
+        <a-marker type="barcode" value="0" id="m4" emitevents="true" smooth="true" smoothCount="5">
+            <!-- Paradox Portal: Red/Purple Chaos Theme -->
+            <a-sphere color="#FF0000" opacity="0.8" radius="0.6" position="0 0.5 0"
+                      animation="property: rotation; to: 360 720 360; loop: true; dur: 2000; easing: linear">
+            </a-sphere>
+            <a-octahedron color="#8B008B" radius="0.5" position="0 0.5 0"
+                          animation="property: rotation; to: 720 360 0; loop: true; dur: 1500; easing: linear">
+            </a-octahedron>
+            <a-text value="PARADOX\nDANGER!" align="center" color="#FF0000" width="3" position="0 1.8 0"
+                    animation="property: opacity; from: 1; to: 0.3; loop: true; dur: 500; dir: alternate">
+            </a-text>
         </a-marker>
 
         <a-entity camera></a-entity>
     </a-scene>
 
     <script>
-        const state = { 
-            active: false, 
-            p1: false, 
-            p2: false, 
-            p3: false,
-            markerVisible: false
+        // Game State
+        const gameState = {
+            started: false,
+            sequence: [],
+            correctPath: ['hiro', 'kanji', 'barcode1'],
+            ended: false
         };
-        
-        const portal1 = document.getElementById('portal1');
-        const portal2 = document.getElementById('portal2');
-        const portal3 = document.getElementById('portal3');
-        
-        function start() {
-            document.getElementById('start').style.display = 'none';
-            document.getElementById('info').style.display = 'block';
-            document.getElementById('progress').style.display = 'flex';
-            state.active = true;
-            updateUI();
-        }
-        
+
+        // UI Elements
+        const startScreen = document.getElementById('startScreen');
+        const info = document.getElementById('info');
+        const infoText = document.getElementById('infoText');
+        const progress = document.getElementById('progress');
+        const endScreen = document.getElementById('endScreen');
+        const endContent = document.getElementById('endContent');
+        const endTitle = document.getElementById('endTitle');
+        const endMessage = document.getElementById('endMessage');
+        const journeyLog = document.getElementById('journeyLog');
+
+        // Start Button
+        document.getElementById('startBtn').addEventListener('click', () => {
+            startScreen.style.display = 'none';
+            info.style.display = 'block';
+            progress.style.display = 'flex';
+            gameState.started = true;
+            updateInfo('🔍 Point camera at HIRO marker');
+        });
+
+        // Replay Button
+        document.getElementById('replayBtn').addEventListener('click', () => {
+            location.reload();
+        });
+
         function updateInfo(text) {
-            document.getElementById('info').textContent = text;
+            infoText.textContent = text;
         }
-        
-        function updateDot(n, s) {
-            const dot = document.getElementById('d' + n);
-            dot.className = 'dot';
-            if (s === 'active') dot.classList.add('active');
-            if (s === 'done') dot.classList.add('done');
-        }
-        
-        function showTap(show) {
-            document.getElementById('taphint').style.display = show ? 'block' : 'none';
-        }
-        
-        function updateUI() {
-            // Update which portal is visible
-            if (!state.p1) {
-                portal1.setAttribute('visible', 'true');
-                portal2.setAttribute('visible', 'false');
-                portal3.setAttribute('visible', 'false');
-                updateInfo('🔵 Portal 1: FUTURE - Scan HIRO & TAP!');
-                if (state.markerVisible) {
-                    updateDot(1, 'active');
-                    showTap(true);
+
+        function updateProgress() {
+            const dots = ['dot1', 'dot2', 'dot3'];
+            dots.forEach((id, idx) => {
+                const dot = document.getElementById(id);
+                dot.className = 'portal-dot';
+                if (idx < gameState.sequence.length) {
+                    dot.classList.add('unlocked');
+                } else if (idx === gameState.sequence.length) {
+                    dot.classList.add('current');
                 }
-            } else if (!state.p2) {
-                portal1.setAttribute('visible', 'false');
-                portal2.setAttribute('visible', 'true');
-                portal3.setAttribute('visible', 'false');
-                updateInfo('🟡 Portal 2: ANCIENT - Scan HIRO & TAP!');
-                if (state.markerVisible) {
-                    updateDot(2, 'active');
-                    showTap(true);
-                }
-            } else if (!state.p3) {
-                portal1.setAttribute('visible', 'false');
-                portal2.setAttribute('visible', 'false');
-                portal3.setAttribute('visible', 'true');
-                updateInfo('🟠 Portal 3: INDUSTRIAL - Scan HIRO & TAP!');
-                if (state.markerVisible) {
-                    updateDot(3, 'active');
-                    showTap(true);
-                }
-            }
+            });
         }
-        
-        // Tap to activate current portal
-        document.addEventListener('click', () => {
-            if (!state.active || !state.markerVisible) return;
+
+        function goodEnding() {
+            if (gameState.ended) return;
+            gameState.ended = true;
+
+            endContent.className = 'end-content good';
+            endTitle.textContent = '🌟 TIMELINE RESTORED! 🌟';
+            endMessage.textContent = 'You successfully traveled through time in the correct sequence!';
             
-            if (!state.p1) {
-                state.p1 = true;
-                updateDot(1, 'done');
-                updateInfo('✅ Portal 1 activated! Point at HIRO again');
-                showTap(false);
-                console.log('Portal 1 (Future) activated!');
-            }
-            else if (!state.p2) {
-                state.p2 = true;
-                updateDot(2, 'done');
-                updateInfo('✅ Portal 2 activated! Point at HIRO again');
-                showTap(false);
-                console.log('Portal 2 (Ancient) activated!');
-            }
-            else if (!state.p3) {
-                state.p3 = true;
-                updateDot(3, 'done');
-                updateInfo('🎉 ALL PORTALS ACTIVATED!');
-                showTap(false);
-                console.log('Portal 3 (Industrial) activated! WIN!');
-                setTimeout(() => {
-                    alert('🎉 CONGRATULATIONS!\n\nAll 3 Time Portals activated:\n✅ Future Portal\n✅ Ancient Portal\n✅ Industrial Portal\n\nYou mastered time travel!\n\nGrade: 9-10 points!');
-                }, 1000);
+            journeyLog.innerHTML = `
+                <h3>Your Journey:</h3>
+                <div class="journey-step">✅ HIRO → Ancient Portal</div>
+                <div class="journey-step">✅ KANJI → Industrial Portal</div>
+                <div class="journey-step">✅ Barcode 1 → Future Portal</div>
+                <p style="margin-top: 20px; color: #4CAF50; font-weight: bold;">
+                    Mission Success! Grade: 9-10 points! 🏆
+                </p>
+            `;
+            
+            endScreen.classList.add('show');
+        }
+
+        function badEnding(reason) {
+            if (gameState.ended) return;
+            gameState.ended = true;
+
+            endContent.className = 'end-content bad';
+            endTitle.textContent = '💥 TIME PARADOX! 💥';
+            endMessage.innerHTML = reason;
+            
+            let journeyHTML = '<h3>Your Journey:</h3>';
+            const portalNames = {
+                'hiro': 'HIRO → Ancient Portal',
+                'kanji': 'KANJI → Industrial Portal',
+                'barcode1': 'Barcode 1 → Future Portal',
+                'barcode0': 'Barcode 0 → PARADOX!'
+            };
+            
+            gameState.sequence.forEach(step => {
+                journeyHTML += `<div class="journey-step">❌ ${portalNames[step]}</div>`;
+            });
+            
+            journeyLog.innerHTML = journeyHTML + `
+                <p style="margin-top: 20px; color: #f44336;">
+                    Timeline corrupted. Try again!
+                </p>
+            `;
+            
+            endScreen.classList.add('show');
+        }
+
+        // Marker 1: HIRO (Ancient)
+        document.getElementById('m1').addEventListener('markerFound', () => {
+            if (!gameState.started || gameState.ended) return;
+            
+            if (gameState.sequence.length === 0) {
+                gameState.sequence.push('hiro');
+                updateProgress();
+                updateInfo('✅ Ancient Portal! Now find KANJI marker (人)');
+            } else if (!gameState.sequence.includes('hiro')) {
+                badEnding('You must scan <strong>HIRO</strong> first!<br>Correct order: HIRO → KANJI → Barcode 1');
             }
         });
-        
-        // HIRO marker events
-        document.getElementById('hiro').addEventListener('markerFound', () => {
-            console.log('HIRO marker found!');
-            if (!state.active) return;
-            state.markerVisible = true;
-            updateUI();
-        });
-        
-        document.getElementById('hiro').addEventListener('markerLost', () => {
-            console.log('HIRO marker lost');
-            state.markerVisible = false;
-            showTap(false);
+
+        // Marker 2: KANJI NFT (Industrial)
+        document.getElementById('m2').addEventListener('markerFound', () => {
+            if (!gameState.started || gameState.ended) return;
             
-            if (!state.p1) {
-                updateInfo('Point at HIRO marker');
-            } else if (!state.p2) {
-                updateInfo('Point at HIRO marker again');
-            } else if (!state.p3) {
-                updateInfo('Point at HIRO marker again');
+            if (gameState.sequence.length === 1 && gameState.sequence[0] === 'hiro') {
+                gameState.sequence.push('kanji');
+                updateProgress();
+                updateInfo('✅ Industrial Portal! Now find Barcode 1 (■ with square)');
+            } else if (gameState.sequence.length === 0) {
+                badEnding('You must scan <strong>HIRO</strong> first!<br>Correct order: HIRO → KANJI → Barcode 1');
+            } else if (!gameState.sequence.includes('kanji')) {
+                badEnding('Wrong sequence!<br>Correct order: HIRO → KANJI → Barcode 1');
             }
+        });
+
+        // Marker 3: Barcode 1 (Future - WIN)
+        document.getElementById('m3').addEventListener('markerFound', () => {
+            if (!gameState.started || gameState.ended) return;
+            
+            if (gameState.sequence.length === 2 && 
+                gameState.sequence[0] === 'hiro' && 
+                gameState.sequence[1] === 'kanji') {
+                gameState.sequence.push('barcode1');
+                updateProgress();
+                updateInfo('🎉 Future Portal Activated!');
+                setTimeout(goodEnding, 1000);
+            } else {
+                badEnding('You must complete HIRO → KANJI first!<br>Then scan Barcode 1');
+            }
+        });
+
+        // Marker 4: Barcode 0 (Paradox - FAIL)
+        document.getElementById('m4').addEventListener('markerFound', () => {
+            if (!gameState.started || gameState.ended) return;
+            
+            gameState.sequence.push('barcode0');
+            badEnding('You scanned <strong>Barcode 0</strong> (□ no black square)!<br>This creates a time paradox!<br><br>Use <strong>Barcode 1</strong> (■ with black square) instead!');
         });
     </script>
 </body>
